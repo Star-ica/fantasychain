@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FantasyChain — Onchain Fantasy Sports Protocol</title>
+  <style>
+    /* ── Reset & Base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:        #0d2a4a;
+      --navy-mid:    #1a3f6f;
+      --accent:      #1565c0;
+      --accent-light:#e8f0fe;
+      --text:        #1a1a2e;
+      --text-muted:  #4a5568;
+      --border:      #d1d9e0;
+      --bg:          #ffffff;
+      --bg-alt:      #f7f9fc;
+      --code-bg:     #f1f5f9;
+      --font:        'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --mono:        'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Page Layout ───────────────────────────────────────── */
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2.5cm;
+    }
+
+    /* ── Typography ────────────────────────────────────────── */
+    h1 { font-size: 2.4rem; font-weight: 700; color: var(--navy); line-height: 1.2; }
+    h2 { font-size: 1.55rem; font-weight: 700; color: var(--navy); margin: 2.4rem 0 0.8rem; border-bottom: 2px solid var(--navy); padding-bottom: 0.35rem; }
+    h3 { font-size: 1.15rem; font-weight: 600; color: var(--navy-mid); margin: 1.6rem 0 0.5rem; }
+    h4 { font-size: 1rem; font-weight: 600; color: var(--navy-mid); margin: 1.2rem 0 0.4rem; }
+
+    p  { margin-bottom: 0.9rem; }
+    ul, ol { margin: 0.6rem 0 0.9rem 1.4rem; }
+    li { margin-bottom: 0.3rem; }
+    strong { font-weight: 600; }
+    em { font-style: italic; }
+    a  { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.1em 0.4em;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      margin: 0.8rem 0 1rem;
+    }
+    pre code { background: none; border: none; padding: 0; font-size: inherit; }
+
+    /* ── Tables ────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.4rem;
+      font-size: 0.9rem;
+    }
+    thead tr { background: var(--navy); color: #fff; }
+    thead th { padding: 0.6rem 0.9rem; text-align: left; font-weight: 600; }
+    tbody tr:nth-child(even) { background: var(--bg-alt); }
+    tbody td { padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+
+    /* ── Callout / Note ────────────────────────────────────── */
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-light);
+      padding: 0.8rem 1.1rem;
+      border-radius: 0 6px 6px 0;
+      margin: 1rem 0 1.2rem;
+      font-size: 0.93rem;
+    }
+    .callout strong { color: var(--navy); }
+
+    /* ── ASCII Diagram ─────────────────────────────────────── */
+    .diagram {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.2rem 1.4rem;
+      overflow-x: auto;
+      white-space: pre;
+      margin: 1rem 0 1.4rem;
+    }
+
+    /* ── Title Page ────────────────────────────────────────── */
+    .title-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 0 2rem;
+      border-bottom: 3px solid var(--navy);
+    }
+    .title-page .logo-mark {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.2rem;
+    }
+    .title-page h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+    .title-page .subtitle {
+      font-size: 1.2rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+    }
+    .title-meta {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 2;
+    }
+    .title-meta strong { color: var(--text); }
+
+    /* ── Table of Contents ─────────────────────────────────── */
+    .toc { margin: 1.6rem 0; }
+    .toc ol { list-style: none; margin-left: 0; counter-reset: toc-counter; }
+    .toc > ol > li { counter-increment: toc-counter; }
+    .toc > ol > li > a::before { content: counter(toc-counter) ". "; font-weight: 600; color: var(--navy); }
+    .toc a {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.2rem 0;
+      border-bottom: 1px dotted var(--border);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    .toc a:hover { color: var(--accent); text-decoration: none; background: var(--bg-alt); padding-left: 0.3rem; }
+    .toc .toc-num { color: var(--text-muted); font-size: 0.85rem; min-width: 2.5rem; text-align: right; }
+    .toc-sub { margin-left: 1.5rem; margin-top: 0; }
+    .toc-sub li { font-size: 0.88rem; }
+    .toc-sub a::before { content: none; }
+    .toc-sub a { color: var(--text-muted); }
+
+    /* ── Section wrapper ───────────────────────────────────── */
+    .section { padding-top: 1.5rem; }
+
+    /* ── Footer ────────────────────────────────────────────── */
+    footer {
+      margin-top: 4rem;
+      padding: 1.5rem 0 2rem;
+      border-top: 2px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ── Glossary ──────────────────────────────────────────── */
+    .glossary dt { font-weight: 600; color: var(--navy-mid); margin-top: 0.9rem; }
+    .glossary dd { margin-left: 1.4rem; color: var(--text-muted); font-size: 0.92rem; }
+
+    /* ── Print ─────────────────────────────────────────────── */
+    @media print {
+      body { font-size: 10pt; }
+      .page { padding: 0; max-width: 100%; }
+      h2 { page-break-before: always; }
+      h2:first-of-type { page-break-before: avoid; }
+      .title-page { page-break-after: always; min-height: auto; padding-bottom: 4cm; }
+      .toc-wrapper { page-break-after: always; }
+      pre, .diagram, table { page-break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+      footer { position: running(footer); }
+      @page {
+        size: A4;
+        margin: 2.5cm 2.5cm 3cm;
+        @bottom-center {
+          content: "FantasyChain Whitepaper  |  Page " counter(page) " of " counter(pages);
+          font-size: 9pt;
+          color: #888;
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══════════════════════════════════════════════════
+       TITLE PAGE
+  ═══════════════════════════════════════════════════ -->
+  <section class="title-page">
+    <p class="logo-mark">FantasyChain Protocol</p>
+    <h1>FantasyChain</h1>
+    <p class="subtitle">Onchain Fantasy Sports Protocol — Technical Whitepaper</p>
+    <div class="title-meta">
+      <div><strong>Version:</strong> 1.0.0</div>
+      <div><strong>Network:</strong> BOT Chain (Chain ID 677)</div>
+      <div><strong>RPC:</strong> https://rpc.botchain.tg</div>
+      <div><strong>Solidity:</strong> ^0.8.20 — OpenZeppelin 5.x</div>
+      <div><strong>License:</strong> MIT</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       TABLE OF CONTENTS
+  ═══════════════════════════════════════════════════ -->
+  <section class="toc-wrapper section">
+    <h2 id="toc">Table of Contents</h2>
+    <nav class="toc" aria-label="Table of contents">
+      <ol>
+        <li><a href="#executive-summary">Executive Summary <span class="toc-num">1</span></a></li>
+        <li><a href="#architecture">Protocol Architecture <span class="toc-num">2</span></a>
+          <ol class="toc-sub">
+            <li><a href="#arch-overview">System Overview</a></li>
+            <li><a href="#arch-diagram">Contract Interaction Diagram</a></li>
+          </ol>
+        </li>
+        <li><a href="#contracts">Smart Contract Reference <span class="toc-num">3</span></a>
+          <ol class="toc-sub">
+            <li><a href="#contract-player">PlayerRegistry</a></li>
+            <li><a href="#contract-factory">CompetitionFactory</a></li>
+            <li><a href="#contract-team">TeamManager</a></li>
+            <li><a href="#contract-scoring">ScoringManager</a></li>
+            <li><a href="#contract-escrow">PrizeEscrow</a></li>
+            <li><a href="#contract-claim">ClaimManager</a></li>
+          </ol>
+        </li>
+        <li><a href="#scoring">Scoring Engine &amp; Oracle Model <span class="toc-num">4</span></a></li>
+        <li><a href="#prizes">Prize Distribution Mechanics <span class="toc-num">5</span></a></li>
+        <li><a href="#disputes">Result Verification &amp; Dispute Process <span class="toc-num">6</span></a></li>
+        <li><a href="#compliance">Compliance &amp; Skill-Based Gaming <span class="toc-num">7</span></a></li>
+        <li><a href="#security">Security Model <span class="toc-num">8</span></a></li>
+        <li><a href="#fees">Tokenomics &amp; Fee Structure <span class="toc-num">9</span></a></li>
+        <li><a href="#deployment">Deployment &amp; Integration Guide <span class="toc-num">10</span></a></li>
+        <li><a href="#roadmap">Roadmap <span class="toc-num">11</span></a></li>
+        <li><a href="#glossary">Glossary <span class="toc-num">12</span></a></li>
+      </ol>
+    </nav>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       1. EXECUTIVE SUMMARY
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="executive-summary">
+    <h2>1. Executive Summary</h2>
+
+    <p>FantasyChain is a fully onchain fantasy sports protocol deployed on BOT Chain (EVM chain ID 677). It enables any organizer to create a skill-based fantasy sports competition, collect entry fees, and automatically distribute prizes to top-ranked participants — with every critical step recorded and verifiable on a public blockchain.</p>
+
+    <p>Traditional fantasy sports platforms are opaque: prize pools are held in centralized wallets, scoring is performed by proprietary algorithms, and result disputes have no binding on-chain mechanism. FantasyChain eliminates these trust dependencies. Prize funds are locked in a smart contract escrow from the moment a competition is created. Scores are submitted by a designated oracle and stored on-chain. Prize distribution follows deterministic rules encoded in the contracts. Winners claim their prizes directly from the escrow without relying on any platform intermediary.</p>
+
+    <p><strong>Key properties of the protocol:</strong></p>
+    <ul>
+      <li><strong>Non-custodial escrow.</strong> Prize pools are held in <code>PrizeEscrow</code>, not in any operator wallet. Neither the organizer nor the platform can redirect funds once a competition finalizes.</li>
+      <li><strong>Transparent scoring.</strong> All team selections and oracle-submitted scores are stored on-chain. Any third party can independently verify the final rankings.</li>
+      <li><strong>Composable architecture.</strong> Six specialized contracts — each owning a single responsibility — can be upgraded or extended independently without breaking the broader system.</li>
+      <li><strong>Multi-sport support.</strong> Football, basketball, cricket, baseball, soccer, tennis, and a generic "other" category are natively supported through the <code>SportType</code> enum.</li>
+      <li><strong>Dual currency.</strong> Competitions accept either the native BOT token or any ERC-20 (default: USDT) for entry fees and prize pools.</li>
+    </ul>
+
+    <p>The protocol is designed to serve three primary users: <em>organizers</em> who fund and configure competitions; <em>participants</em> who build fantasy teams and pay entry fees; and <em>oracles</em> who submit real-world athletic performance data to the chain.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       2. PROTOCOL ARCHITECTURE
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="architecture">
+    <h2>2. Protocol Architecture</h2>
+
+    <h3 id="arch-overview">2.1 System Overview</h3>
+
+    <p>FantasyChain is composed of six Solidity contracts. Each contract has a single primary responsibility and communicates with its peers through typed interfaces rather than direct inheritance. All contracts inherit OpenZeppelin's <code>Ownable</code> and <code>Pausable</code> primitives; contracts that handle value transfers also inherit <code>ReentrancyGuard</code>.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Contract</th>
+          <th>Responsibility</th>
+          <th>Holds Funds?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>PlayerRegistry</code></td>
+          <td>Global registry of real-world athletes eligible for selection</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td><code>CompetitionFactory</code></td>
+          <td>Creates competitions; holds organizer's initial prize pool contribution until finalization</td>
+          <td>Yes (organizer prize pool)</td>
+        </tr>
+        <tr>
+          <td><code>TeamManager</code></td>
+          <td>Accepts team submissions; validates player eligibility and entry fees</td>
+          <td>Transiently (entry fee routing)</td>
+        </tr>
+        <tr>
+          <td><code>ScoringManager</code></td>
+          <td>Accepts and stores oracle-submitted scores per team per competition</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td><code>PrizeEscrow</code></td>
+          <td>Locks prize pool; computes winner allocations; releases funds to ClaimManager</td>
+          <td>Yes (prize funds)</td>
+        </tr>
+        <tr>
+          <td><code>ClaimManager</code></td>
+          <td>Allows winners to pull their prize allocations; handles ERC-20 and native claims</td>
+          <td>Yes (pending claims)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 id="arch-diagram">2.2 Contract Interaction Diagram</h3>
+
+    <div class="diagram">
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                        FantasyChain Protocol                        │
+  └─────────────────────────────────────────────────────────────────────┘
+
+   ORGANIZER                              ORACLE
+       │                                     │
+       │ createCompetition()                 │ submitScores()
+       ▼                                     ▼
+  ┌──────────────────┐   recordTeamEntry()  ┌──────────────────┐
+  │ CompetitionFactory│◄────────────────────│   TeamManager    │
+  │                  │                      │                  │
+  │ - competitions[] │                      │ - teams[]        │
+  │ - prizePool      │                      │ - userTeam[]     │
+  │ - platformFeeBps │                      │                  │
+  └──────┬───────────┘                      └──────────────────┘
+         │                                          ▲
+         │ getCompetition()                         │ createTeam()
+         ▼                                          │
+  ┌──────────────────┐    isPlayerIn               PARTICIPANT
+  │  PlayerRegistry  │◄─────────────────────────────┘
+  │                  │   Competition()
+  │ - players[]      │
+  │ - compPlayers[]  │
+  └──────────────────┘
+
+   ORACLE
+       │
+       │ submitScores() ──► ScoringManager
+       │                        │
+       │                        │ getTopTeams()
+       ▼                        ▼
+  ┌──────────────────┐   ┌──────────────────┐   withdraw()   ┌──────────────┐
+  │  ScoringManager  │──►│   PrizeEscrow    │──────────────►│ ClaimManager │◄── WINNER
+  │                  │   │                  │                │              │
+  │ - scores[]       │   │ - escrows[]      │   claim()      │ - claims[]   │
+  │ - rankings[]     │   │ - allocations[]  │◄──────────────│              │
+  └──────────────────┘   └──────────────────┘                └──────────────┘
+    </div>
+
+    <p>The data flow for a full competition lifecycle is as follows:</p>
+    <ol>
+      <li>Organizer calls <code>CompetitionFactory.createCompetition()</code>, locking the prize pool on-chain.</li>
+      <li>Registrar adds eligible athletes via <code>PlayerRegistry.batchRegisterPlayers()</code>.</li>
+      <li>Participants call <code>TeamManager.createTeam()</code> before the submission deadline, paying entry fees.</li>
+      <li>After the real-world event concludes, the oracle submits scores via <code>ScoringManager.submitScores()</code> and transitions the competition to <code>SCORING</code> status.</li>
+      <li>Oracle or owner calls <code>CompetitionFactory.updateStatus(FINALIZED)</code>.</li>
+      <li>Prize allocations are computed by <code>PrizeEscrow</code> based on final rankings.</li>
+      <li>Winners call <code>ClaimManager.claim()</code> to withdraw their prizes.</li>
+    </ol>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       3. SMART CONTRACT REFERENCE
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="contracts">
+    <h2>3. Smart Contract Reference</h2>
+
+    <h3 id="contract-player">3.1 PlayerRegistry</h3>
+
+    <p><strong>Purpose:</strong> Maintains a global, immutable-by-default registry of real-world athletes. Each player is assigned a globally unique sequential ID. Players are associated with one or more competitions via a separate mapping, allowing the same athlete to participate across multiple events.</p>
+
+    <h4>Key Data Structures</h4>
+    <ul>
+      <li><code>Player</code> struct — stores <code>id</code>, <code>name</code>, <code>realTeam</code>, <code>position</code> (enum covering football through general), <code>sport</code> (uint8), <code>status</code> (Active / Injured / Suspended / Retired), <code>registeredAt</code>, and <code>exists</code>.</li>
+      <li><code>competitionPlayers[competitionId]</code> — array of player IDs assigned to each competition.</li>
+      <li><code>playerIndexInComp[competitionId][playerId]</code> — O(1) lookup and O(1) removal via swap-and-pop.</li>
+    </ul>
+
+    <h4>Key Functions</h4>
+    <table>
+      <thead><tr><th>Function</th><th>Access</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>registerPlayer()</code></td><td>Registrar</td><td>Register a single athlete globally; returns new player ID.</td></tr>
+        <tr><td><code>batchRegisterPlayers()</code></td><td>Registrar</td><td>Register up to 100 athletes and assign them to a competition in one transaction.</td></tr>
+        <tr><td><code>addPlayerToCompetition()</code></td><td>Registrar</td><td>Add an existing player to an additional competition pool.</td></tr>
+        <tr><td><code>removePlayerFromCompetition()</code></td><td>Registrar</td><td>Remove a player from a competition's pool using swap-and-pop.</td></tr>
+        <tr><td><code>updatePlayerStatus()</code></td><td>Registrar</td><td>Mark a player as injured, suspended, or retired.</td></tr>
+        <tr><td><code>getCompetitionPlayerDetails()</code></td><td>Public</td><td>Return full <code>Player</code> structs for all players in a competition.</td></tr>
+        <tr><td><code>isPlayerInCompetition()</code></td><td>Public</td><td>O(1) eligibility check used by TeamManager during team creation.</td></tr>
+        <tr><td><code>getPlayersByPosition()</code></td><td>Public</td><td>Filter competition players by position enum.</td></tr>
+        <tr><td><code>setRegistrar()</code></td><td>Owner</td><td>Grant or revoke registrar role for a given address.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="contract-factory">3.2 CompetitionFactory</h3>
+
+    <p><strong>Purpose:</strong> The entry point for organizers. Manages the full lifecycle of a competition from creation through cancellation or finalization. Holds the organizer's initial prize pool until the competition concludes or is cancelled.</p>
+
+    <h4>Competition Lifecycle States</h4>
+    <p><code>OPEN → CLOSED → SCORING → DISPUTED → FINALIZED → CANCELLED</code></p>
+    <p>Status transitions are permitted by the organizer, the competition's oracle, or the contract owner. This flexibility allows the oracle to move a competition into <code>SCORING</code> once results are ready, the organizer to flag a <code>DISPUTED</code> state, and the owner to finalize or cancel in edge cases.</p>
+
+    <h4>Key Functions</h4>
+    <table>
+      <thead><tr><th>Function</th><th>Access</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>createCompetition()</code></td><td>Anyone (payable)</td><td>Create a native-BOT competition; <code>msg.value</code> becomes the prize pool.</td></tr>
+        <tr><td><code>createCompetitionUSDT()</code></td><td>Anyone (ERC-20 approve first)</td><td>Create a USDT-denominated competition; transfers USDT from caller.</td></tr>
+        <tr><td><code>updateStatus()</code></td><td>Organizer / Oracle / Owner</td><td>Advance or revert competition status.</td></tr>
+        <tr><td><code>cancelCompetition()</code></td><td>Organizer</td><td>Cancel an open or closed competition; refunds prize pool to organizer immediately.</td></tr>
+        <tr><td><code>recordTeamEntry()</code></td><td>TeamManager</td><td>Validates entry window and max-team cap; increments team count.</td></tr>
+        <tr><td><code>listCompetitions()</code></td><td>Public</td><td>Paginated listing with optional status filter (pass 255 for no filter).</td></tr>
+        <tr><td><code>setPlatformFee()</code></td><td>Owner</td><td>Update platform fee in basis points (capped at 1000 = 10%).</td></tr>
+        <tr><td><code>setOracleAuthorization()</code></td><td>Owner</td><td>Whitelist or blacklist a global oracle address.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Constructor Arguments</h4>
+    <ul>
+      <li><code>_feeRecipient</code> — address that receives the platform fee cut from every entry fee payment.</li>
+      <li><code>_platformFeeBps</code> — initial fee in basis points (recommended: <code>250</code> for 2.5%).</li>
+    </ul>
+
+    <h3 id="contract-team">3.3 TeamManager</h3>
+
+    <p><strong>Purpose:</strong> Accepts team submissions from participants. Enforces one team per wallet per competition, validates that all selected players are registered in the target competition, and routes entry fees to the platform fee recipient and prize pool.</p>
+
+    <h4>Key Functions</h4>
+    <table>
+      <thead><tr><th>Function</th><th>Access</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>createTeam()</code></td><td>Anyone (payable)</td><td>Submit a team; validates player eligibility, entry fee, and roster size rules.</td></tr>
+        <tr><td><code>setCompetitionRules()</code></td><td>Owner</td><td>Set min/max player count for a competition before entries open.</td></tr>
+        <tr><td><code>getTeam()</code></td><td>Public</td><td>Return full Team struct by team ID.</td></tr>
+        <tr><td><code>getUserTeam()</code></td><td>Public</td><td>Look up a participant's team for a given competition.</td></tr>
+        <tr><td><code>getCompetitionTeamDetails()</code></td><td>Public</td><td>Return all Team structs for a competition.</td></tr>
+        <tr><td><code>getTeamPlayers()</code></td><td>Public</td><td>Return the array of player IDs on a team.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Entry Fee Flow</h4>
+    <p>When a participant submits a team with an entry fee, TeamManager splits the payment:</p>
+    <ul>
+      <li>Platform fee (<code>entryFee × platformFeeBps / 10000</code>) is forwarded immediately to <code>feeRecipient</code>.</li>
+      <li>The remainder (<code>poolContribution</code>) is forwarded to PrizeEscrow or held by TeamManager pending escrow integration.</li>
+      <li>Any overpayment beyond <code>entryFee</code> is refunded to the sender in the same transaction.</li>
+    </ul>
+
+    <h3 id="contract-scoring">3.4 ScoringManager</h3>
+
+    <p><strong>Purpose:</strong> Accepts and stores real-world performance scores submitted by the designated oracle after a competition's real-world event concludes. Maintains per-team, per-competition score records and provides ranking data to PrizeEscrow.</p>
+
+    <h4>Score Submission Model</h4>
+    <p>Scores are submitted as an array of <code>(teamId, score)</code> pairs for a given competition. The oracle must be the address recorded on the competition in CompetitionFactory. Scores are accepted only while the competition is in <code>SCORING</code> status. Once all scores are submitted, the oracle transitions the competition to <code>FINALIZED</code>.</p>
+
+    <h4>Key Functions</h4>
+    <table>
+      <thead><tr><th>Function</th><th>Access</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>submitScores()</code></td><td>Oracle</td><td>Batch-submit <code>(teamId, score)</code> pairs for a competition; emits <code>ScoreSubmitted</code> per team.</td></tr>
+        <tr><td><code>getScore()</code></td><td>Public</td><td>Return the score for a specific team.</td></tr>
+        <tr><td><code>getTopTeams()</code></td><td>Public</td><td>Return the N highest-scoring team IDs for a competition; used by PrizeEscrow.</td></tr>
+        <tr><td><code>getRankings()</code></td><td>Public</td><td>Return all team IDs sorted by score descending.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="contract-escrow">3.5 PrizeEscrow</h3>
+
+    <p><strong>Purpose:</strong> The financial heart of the protocol. Locks prize pool funds from CompetitionFactory and entry-fee contributions from TeamManager. Once a competition is finalized, queries ScoringManager for the top-ranked teams and allocates prize shares according to the configured split (default: 50 / 30 / 20). Releases allocation records to ClaimManager.</p>
+
+    <h4>Key Functions</h4>
+    <table>
+      <thead><tr><th>Function</th><th>Access</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>depositPrizePool()</code></td><td>CompetitionFactory</td><td>Lock organizer's initial prize pool into escrow.</td></tr>
+        <tr><td><code>depositEntryFee()</code></td><td>TeamManager</td><td>Add entry fee contributions to the competition's escrow balance.</td></tr>
+        <tr><td><code>finalizeAndAllocate()</code></td><td>Oracle / Owner</td><td>Query top-N teams from ScoringManager; compute allocations; signal ClaimManager.</td></tr>
+        <tr><td><code>getEscrowBalance()</code></td><td>Public</td><td>Return total locked funds for a competition.</td></tr>
+        <tr><td><code>getAllocation()</code></td><td>Public / ClaimManager</td><td>Return the prize allocation for a given team.</td></tr>
+        <tr><td><code>emergencyWithdraw()</code></td><td>Owner</td><td>Rescue stuck funds in extreme circumstances; emits <code>EmergencyWithdrawal</code>.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="contract-claim">3.6 ClaimManager</h3>
+
+    <p><strong>Purpose:</strong> Implements the pull-payment pattern for prize disbursement. Winners call <code>claim()</code> to withdraw their allocated prize. ClaimManager queries PrizeEscrow for the allocation, marks it as claimed, and transfers the funds to the winner's wallet. Supports both native BOT and ERC-20 (USDT) prizes.</p>
+
+    <h4>Key Functions</h4>
+    <table>
+      <thead><tr><th>Function</th><th>Access</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>claim(uint256 competitionId)</code></td><td>Winner</td><td>Claim the caller's prize for a finalized competition; reverts if already claimed or no allocation exists.</td></tr>
+        <tr><td><code>batchClaim(uint256[] competitionIds)</code></td><td>Winner</td><td>Claim prizes across multiple competitions in one transaction.</td></tr>
+        <tr><td><code>hasClaimed()</code></td><td>Public</td><td>Check if a winner has already claimed for a competition.</td></tr>
+        <tr><td><code>getPendingClaims()</code></td><td>Public</td><td>Return unclaimed allocations for a given address.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       4. SCORING ENGINE & ORACLE MODEL
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="scoring">
+    <h2>4. Scoring Engine &amp; Oracle Model</h2>
+
+    <h3>4.1 On-Chain vs. Off-Chain Scoring</h3>
+
+    <p>FantasyChain separates scoring logic from scoring execution. The <em>rules</em> — which actions earn how many points — are defined off-chain in a JSON document whose <code>keccak256</code> hash is stored in the competition record as <code>scoringRulesHash</code>. Any participant can independently verify that the oracle applied the rules faithfully by hashing the published JSON and comparing it to the on-chain value.</p>
+
+    <p>The <em>results</em> — the computed score for every team — are written on-chain by the oracle via <code>ScoringManager.submitScores()</code>. This creates a permanent, tamper-proof record of every team's performance.</p>
+
+    <h3>4.2 Oracle Authorization</h3>
+
+    <p>Each competition specifies an <code>oracle</code> address at creation time. This address is the sole party permitted to submit scores to ScoringManager for that competition. The oracle may also transition the competition to <code>SCORING</code> and subsequently <code>FINALIZED</code> status.</p>
+
+    <p>Globally whitelisted oracle addresses are tracked in <code>CompetitionFactory.authorizedOracles</code>. The contract owner can authorize or revoke oracle status at any time. For high-value competitions, a hardware-secured oracle or a multisig is strongly recommended.</p>
+
+    <h3>4.3 Scoring Rule Schema</h3>
+
+    <p>The off-chain scoring JSON follows this schema (example for soccer):</p>
+
+    <pre><code>{
+  "sport": "SOCCER",
+  "version": "1.0",
+  "actions": [
+    { "event": "goal",        "points": 6,  "positions": ["FORWARD","MIDFIELDER"] },
+    { "event": "goal",        "points": 10, "positions": ["DEFENDER","GOALKEEPER"] },
+    { "event": "assist",      "points": 3,  "positions": ["*"] },
+    { "event": "clean_sheet", "points": 4,  "positions": ["GOALKEEPER","DEFENDER"] },
+    { "event": "yellow_card", "points": -1, "positions": ["*"] },
+    { "event": "red_card",    "points": -3, "positions": ["*"] },
+    { "event": "appearance",  "points": 2,  "positions": ["*"] }
+  ]
+}</code></pre>
+
+    <p>The hash of this document is computed as <code>keccak256(abi.encodePacked(jsonString))</code> and stored in <code>Competition.scoringRulesHash</code> at creation time.</p>
+
+    <h3>4.4 Score Finality</h3>
+
+    <p>Scores submitted via <code>submitScores()</code> are final once the competition transitions to <code>FINALIZED</code>. If a score submission error is discovered before finalization, the oracle may resubmit corrected scores while the competition remains in <code>SCORING</code> status. After finalization, scores are immutable.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       5. PRIZE DISTRIBUTION
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="prizes">
+    <h2>5. Prize Distribution Mechanics</h2>
+
+    <h3>5.1 Prize Pool Composition</h3>
+
+    <p>The total prize pool for a competition is the sum of:</p>
+    <ul>
+      <li><strong>Organizer contribution</strong> — the <code>msg.value</code> (or USDT amount) locked when <code>createCompetition()</code> is called.</li>
+      <li><strong>Entry fee contributions</strong> — the net entry fees (after platform fee deduction) forwarded to PrizeEscrow from TeamManager as participants register teams.</li>
+    </ul>
+
+    <h3>5.2 Default Distribution Split</h3>
+
+    <p>When <code>finalizeAndAllocate()</code> is called, PrizeEscrow queries ScoringManager for the top three teams and divides the total prize pool as follows:</p>
+
+    <table>
+      <thead><tr><th>Place</th><th>Share</th><th>Example (1,000 BOT pool)</th></tr></thead>
+      <tbody>
+        <tr><td>1st Place</td><td>50%</td><td>500 BOT</td></tr>
+        <tr><td>2nd Place</td><td>30%</td><td>300 BOT</td></tr>
+        <tr><td>3rd Place</td><td>20%</td><td>200 BOT</td></tr>
+      </tbody>
+    </table>
+
+    <p>The organizer may configure a custom split at competition creation time by passing a <code>prizeDistribution</code> array summing to 10,000 basis points. Custom distributions must be validated on-chain before the competition opens.</p>
+
+    <h3>5.3 Fewer Than Three Teams</h3>
+
+    <p>If fewer than three teams entered a competition:</p>
+    <ul>
+      <li>With one team: the single participant receives 100% of the prize pool.</li>
+      <li>With two teams: the winner receives 65%; the runner-up receives 35% (proportional rescaling of the top two bands).</li>
+    </ul>
+    <p>These edge-case distributions are computed dynamically by PrizeEscrow at finalization.</p>
+
+    <h3>5.4 Unclaimed Prizes</h3>
+
+    <p>Prize allocations that remain unclaimed after a configurable <code>claimWindow</code> (default: 90 days from finalization) may be swept by the contract owner to a designated charity or treasury address. This prevents prize funds from being permanently locked due to abandoned wallets. The claim window and sweep destination are set at PrizeEscrow deployment.</p>
+
+    <h3>5.5 Platform Fee</h3>
+
+    <p>The platform fee is deducted from each entry fee payment at the time of team submission, before any funds reach PrizeEscrow. The platform fee does <em>not</em> reduce the organizer's initial prize pool contribution — it applies only to participant entry fees. See Section 9 for full fee mechanics.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       6. RESULT VERIFICATION & DISPUTE PROCESS
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="disputes">
+    <h2>6. Result Verification &amp; Dispute Process</h2>
+
+    <h3>6.1 Verification by Any Party</h3>
+
+    <p>Because all team selections and oracle-submitted scores are stored on-chain, any party can verify the correctness of a competition result without requesting data from the platform:</p>
+
+    <ol>
+      <li>Retrieve all team player selections from <code>TeamManager.getCompetitionTeamDetails()</code>.</li>
+      <li>Retrieve all submitted scores from <code>ScoringManager.getRankings()</code>.</li>
+      <li>Download the scoring rules JSON from the off-chain URI published by the organizer and verify its hash matches <code>Competition.scoringRulesHash</code>.</li>
+      <li>Independently compute each team's score from the rules JSON and the publicly available real-world event data (official sports data APIs, league websites, etc.).</li>
+      <li>Compare independently computed scores to the oracle-submitted scores on-chain.</li>
+    </ol>
+
+    <p>Any discrepancy discovered in this process constitutes grounds for a formal dispute.</p>
+
+    <h3>6.2 Dispute Initiation</h3>
+
+    <p>Any participant may initiate a dispute by calling <code>CompetitionFactory.updateStatus(competitionId, DISPUTED)</code>. Only the organizer, oracle, or owner can call this function. In practice, a participant who discovers a scoring error should contact the organizer, who then transitions the competition to <code>DISPUTED</code>.</p>
+
+    <div class="callout">
+      <strong>Note:</strong> A competition in <code>DISPUTED</code> status halts all prize claims via ClaimManager until the dispute is resolved. The contract owner can override the status to either <code>FINALIZED</code> (accepting corrected scores) or <code>CANCELLED</code> (triggering refunds).
+    </div>
+
+    <h3>6.3 Dispute Resolution</h3>
+
+    <table>
+      <thead><tr><th>Outcome</th><th>Action</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Scores confirmed correct</td><td>Owner / Oracle transitions to <code>FINALIZED</code></td><td>Original prize allocations stand; claims re-open.</td></tr>
+        <tr><td>Scores corrected</td><td>Oracle resubmits corrected scores while in <code>DISPUTED</code>; then transitions to <code>FINALIZED</code></td><td>New allocations computed; claims open with corrected amounts.</td></tr>
+        <tr><td>Competition invalid</td><td>Owner transitions to <code>CANCELLED</code></td><td>PrizeEscrow releases all funds back to organizer; participant entry fees refunded pro-rata.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>6.4 On-Chain Arbitration (Future)</h3>
+
+    <p>The current release relies on the contract owner as the final arbiter. A future protocol upgrade will integrate an on-chain arbitration module where a committee of staked validators can be called upon to adjudicate disputes. Each validator reviews the evidence and casts a weighted vote. The majority verdict updates the competition's final scores on-chain without requiring off-chain coordination.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       7. COMPLIANCE & SKILL-BASED GAMING
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="compliance">
+    <h2>7. Compliance &amp; Skill-Based Gaming</h2>
+
+    <h3>7.1 Fantasy Sports as a Skill-Based Activity</h3>
+
+    <p>Fantasy sports competitions are widely recognized in numerous jurisdictions as skill-based games, legally distinct from gambling. This distinction rests on three pillars:</p>
+
+    <ul>
+      <li><strong>Outcome determined by participant skill.</strong> The result depends predominantly on the participant's knowledge of athletes, statistics, and strategic team-building decisions — not on a random number generator or house-controlled outcome.</li>
+      <li><strong>Real-world event basis.</strong> Scores derive from actual athletic performance in real sporting events, not from simulated or generated results.</li>
+      <li><strong>No house edge against participants.</strong> The platform collects a fixed service fee from entry fees; it does not take positions against participants or benefit from any particular outcome.</li>
+    </ul>
+
+    <p>FantasyChain's architecture reinforces all three pillars. Team selections are publicly stored on-chain before the sporting event occurs (preventing retroactive adjustment). Scoring rules are hashed into the competition record before entries open (preventing post-hoc rule changes). The platform fee is fixed and transparent (preventing hidden house advantages).</p>
+
+    <h3>7.2 Jurisdictional Considerations</h3>
+
+    <p>The legal status of fantasy sports varies by jurisdiction. Operators deploying FantasyChain are solely responsible for assessing and complying with applicable laws in jurisdictions where their users reside. The protocol itself is neutral infrastructure; it does not enforce geographic restrictions. Operators may implement jurisdiction-based access controls at the frontend layer.</p>
+
+    <p>Key jurisdictions where fantasy sports are expressly permitted as skill games include the United States (with certain state-level exclusions), the United Kingdom, Canada, Australia, and India. Operators should obtain independent legal counsel before launching in any jurisdiction.</p>
+
+    <h3>7.3 KYC / AML Integration</h3>
+
+    <p>The FantasyChain smart contracts do not enforce KYC/AML procedures — these are matters for the operator layer. Operators may integrate identity verification at the frontend or implement an allowlist controlled by an admin role before participants are permitted to call <code>TeamManager.createTeam()</code>.</p>
+
+    <h3>7.4 Minor Protection</h3>
+
+    <p>Operators must implement age verification at the application layer to prevent participation by minors in jurisdictions where such restrictions apply. The smart contracts do not enforce age requirements.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       8. SECURITY MODEL
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="security">
+    <h2>8. Security Model</h2>
+
+    <h3>8.1 Reentrancy Protection</h3>
+
+    <p>All contracts that execute external calls (ether or ERC-20 transfers) inherit OpenZeppelin's <code>ReentrancyGuard</code> and apply the <code>nonReentrant</code> modifier to every external function that moves funds. The contracts additionally follow the checks-effects-interactions pattern: state variables are updated before any external call is made.</p>
+
+    <h3>8.2 Access Control</h3>
+
+    <p>Role-based access control is enforced across all contracts:</p>
+
+    <table>
+      <thead><tr><th>Role</th><th>Permissions</th><th>Mechanism</th></tr></thead>
+      <tbody>
+        <tr><td>Owner</td><td>Admin functions, pause/unpause, emergency withdrawal, arbitration override</td><td>OZ <code>Ownable</code></td></tr>
+        <tr><td>Registrar</td><td>Register players, update player status</td><td>Mapping in PlayerRegistry</td></tr>
+        <tr><td>Oracle</td><td>Submit scores, advance competition status</td><td>Per-competition address in CompetitionFactory</td></tr>
+        <tr><td>Organizer</td><td>Cancel competition, advance status (limited)</td><td>Recorded at competition creation</td></tr>
+        <tr><td>Participant</td><td>Create teams, claim prizes</td><td>Open, with on-chain validation</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.3 Pause Mechanism</h3>
+
+    <p>Every contract implements OpenZeppelin's <code>Pausable</code>. When paused, all state-modifying external functions that carry the <code>whenNotPaused</code> modifier revert immediately. Read functions remain available. Pausing is an emergency measure intended for use during security incidents, not routine operations. Unpause requires an explicit owner transaction.</p>
+
+    <h3>8.4 Integer Overflow / Underflow</h3>
+
+    <p>All contracts target Solidity 0.8.20, which has checked arithmetic by default. Integer overflow and underflow cause automatic reverts. No <code>unchecked</code> blocks are used in value-handling paths.</p>
+
+    <h3>8.5 ERC-20 Safety</h3>
+
+    <p>USDT transfers use low-level <code>.call()</code> with return-value checks rather than the standard <code>IERC20.transfer()</code> interface, to handle non-standard ERC-20 tokens (such as USDT on Ethereum mainnet) that return no boolean. The check pattern is:</p>
+
+    <pre><code>(bool success, bytes memory data) = token.call(
+    abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
+);
+require(success &amp;&amp; (data.length == 0 || abi.decode(data, (bool))), "Transfer failed");</code></pre>
+
+    <h3>8.6 Oracle Trust Assumptions</h3>
+
+    <p>The oracle is a privileged role. A malicious or compromised oracle could submit incorrect scores, favoring certain teams. Mitigations include:</p>
+    <ul>
+      <li>Oracle address is set per-competition; a compromised oracle affects only future competitions unless the owner revokes it.</li>
+      <li>The 90-day dispute window gives participants time to independently verify scores before prizes are disbursed.</li>
+      <li>For high-value competitions, a multisig oracle (requiring k-of-n signatures to submit scores) is recommended.</li>
+      <li>A future upgrade will add an on-chain signature verification scheme for oracle data.</li>
+    </ul>
+
+    <h3>8.7 Audit Status</h3>
+
+    <div class="callout">
+      <strong>Pre-Audit Notice:</strong> FantasyChain v1.0.0 has not undergone a formal third-party security audit. Operators should commission an independent audit by a reputable firm before deploying in production with significant prize pools. The contracts are provided as-is under the MIT license.
+    </div>
+
+    <p>Recommended audit scope: all six contracts with particular focus on PrizeEscrow (fund custody), ClaimManager (withdrawal logic), and CompetitionFactory (prize pool receipt and cancellation refund).</p>
+
+    <h3>8.8 Upgrade Path</h3>
+
+    <p>The contracts in v1.0 are not upgradeable proxies. Upgrades require deploying new contract instances and migrating state. For incremental changes, individual contracts (e.g., ScoringManager, ClaimManager) can be redeployed and their addresses updated via admin setter functions on the contracts that reference them (e.g., <code>TeamManager.setCompetitionFactory()</code>). A future release will introduce a proxy-based upgrade pattern with a timelock.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       9. TOKENOMICS / FEE STRUCTURE
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="fees">
+    <h2>9. Tokenomics &amp; Fee Structure</h2>
+
+    <h3>9.1 Fee Overview</h3>
+
+    <p>FantasyChain does not have a native protocol token. The protocol earns revenue through a single mechanism: a basis-point fee on participant entry fees. The fee is expressed in basis points and stored in <code>CompetitionFactory.platformFeeBps</code>.</p>
+
+    <table>
+      <thead><tr><th>Parameter</th><th>Default</th><th>Range</th><th>Who Controls</th></tr></thead>
+      <tbody>
+        <tr><td>Platform fee</td><td>250 bps (2.5%)</td><td>0 – 1000 bps (0 – 10%)</td><td>Contract owner</td></tr>
+        <tr><td>Fee recipient</td><td>Set at deploy</td><td>Any address</td><td>Contract owner</td></tr>
+        <tr><td>Prize split</td><td>50 / 30 / 20</td><td>Configurable per competition</td><td>Organizer (at creation)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>9.2 Fee Calculation Example</h3>
+
+    <p>Consider a competition with a 10 BOT entry fee and 50 participants:</p>
+
+    <table>
+      <thead><tr><th>Flow</th><th>Amount</th></tr></thead>
+      <tbody>
+        <tr><td>Total entry fees collected</td><td>500 BOT</td></tr>
+        <tr><td>Platform fee (2.5% × 500)</td><td>12.5 BOT → <code>feeRecipient</code></td></tr>
+        <tr><td>Net to prize pool</td><td>487.5 BOT → PrizeEscrow</td></tr>
+        <tr><td>+ Organizer's initial prize pool</td><td>(variable)</td></tr>
+        <tr><td>= Total prize pool available</td><td>487.5 BOT + organizer contribution</td></tr>
+      </tbody>
+    </table>
+
+    <h3>9.3 Free Competitions</h3>
+
+    <p>Organizers may set <code>entryFee = 0</code> to create free-to-enter competitions. The prize pool in this case consists solely of the organizer's upfront contribution. No platform fee is collected from free competitions (there is no fee base to calculate from). The protocol earns revenue only from paid competitions.</p>
+
+    <h3>9.4 Native vs. ERC-20 Competitions</h3>
+
+    <p>Both native BOT and USDT (or any ERC-20) prizes are supported. The currency is set at competition creation time and cannot be changed. Entry fees must be denominated in the same currency as the prize pool. USDT-denominated competitions require participants to <code>approve()</code> the TeamManager contract before calling <code>createTeam()</code>.</p>
+
+    <h3>9.5 Gas Efficiency</h3>
+
+    <p>Key gas optimizations in the protocol:</p>
+    <ul>
+      <li>Swap-and-pop pattern in PlayerRegistry for O(1) player removal from competition pools.</li>
+      <li>Batch player registration processes up to 100 athletes per transaction.</li>
+      <li>Paginated <code>listCompetitions()</code> avoids unbounded loops in view functions.</li>
+      <li>Scores submitted as an array in a single transaction rather than one-by-one.</li>
+      <li>Solidity optimizer enabled with 200 runs (balanced between deploy cost and call cost).</li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       10. DEPLOYMENT & INTEGRATION GUIDE
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="deployment">
+    <h2>10. Deployment &amp; Integration Guide</h2>
+
+    <h3>10.1 Network Configuration</h3>
+
+    <table>
+      <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Network Name</td><td>BOT Chain</td></tr>
+        <tr><td>Chain ID</td><td>677</td></tr>
+        <tr><td>RPC URL</td><td>https://rpc.botchain.tg</td></tr>
+        <tr><td>Native Currency</td><td>BOT</td></tr>
+        <tr><td>Solidity Target</td><td>0.8.20</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.2 Deployment Order</h3>
+
+    <p>Contracts must be deployed in dependency order because later contracts require the addresses of earlier ones as constructor arguments:</p>
+
+    <ol>
+      <li><strong>PlayerRegistry</strong> — no dependencies.</li>
+      <li><strong>CompetitionFactory</strong> — requires <code>feeRecipient</code> and <code>platformFeeBps</code>.</li>
+      <li><strong>TeamManager</strong> — requires <code>CompetitionFactory</code> and <code>PlayerRegistry</code> addresses.</li>
+      <li><strong>ScoringManager</strong> — requires <code>CompetitionFactory</code> and <code>TeamManager</code> addresses.</li>
+      <li><strong>PrizeEscrow</strong> — requires <code>CompetitionFactory</code> and <code>ScoringManager</code> addresses.</li>
+      <li><strong>ClaimManager</strong> — requires <code>PrizeEscrow</code> and <code>CompetitionFactory</code> addresses.</li>
+    </ol>
+
+    <h3>10.3 Post-Deployment Setup</h3>
+
+    <p>After all contracts are deployed, perform these administrative steps before opening the platform to users:</p>
+
+    <ol>
+      <li>Authorize the oracle wallet in CompetitionFactory: <code>setOracleAuthorization(oracleAddress, true)</code>.</li>
+      <li>If using a hot wallet for player registration, authorize it as a registrar: <code>PlayerRegistry.setRegistrar(hotWallet, true)</code>.</li>
+      <li>Update the frontend <code>index.html</code> CONFIG block with all deployed contract addresses.</li>
+      <li>Conduct a full smoke test: register players, create a competition, submit teams, submit scores, finalize, claim.</li>
+    </ol>
+
+    <h3>10.4 Frontend Integration</h3>
+
+    <p>The included <code>index.html</code> is a single-file frontend that uses <code>ethers.js</code> (v5 or v6) via CDN and MetaMask for wallet connection. It reads contract ABIs inline and communicates directly with the BOT Chain RPC. To integrate with the deployed contracts:</p>
+
+    <ol>
+      <li>Update the <code>CONFIG.contracts</code> object in <code>index.html</code> with deployed addresses.</li>
+      <li>Ensure the ABI JSON embedded in the frontend matches the compiled artifacts in <code>artifacts/contracts/</code>.</li>
+      <li>Host <code>index.html</code> on any static hosting provider (IPFS, Vercel, Cloudflare Pages).</li>
+    </ol>
+
+    <h3>10.5 Oracle Integration</h3>
+
+    <p>The oracle is an off-chain service (a Node.js or Python script) that:</p>
+    <ol>
+      <li>Monitors sports data APIs for event completion.</li>
+      <li>Applies the scoring rules JSON to compute each registered team's score.</li>
+      <li>Calls <code>CompetitionFactory.updateStatus(id, SCORING)</code> to signal scoring is in progress.</li>
+      <li>Calls <code>ScoringManager.submitScores(competitionId, teamIds, scores)</code> with the computed scores.</li>
+      <li>Calls <code>CompetitionFactory.updateStatus(id, FINALIZED)</code> to open prize claims.</li>
+      <li>Calls <code>PrizeEscrow.finalizeAndAllocate(competitionId)</code> to trigger prize computation.</li>
+    </ol>
+
+    <p>The oracle wallet must be funded with BOT for gas on all these transactions.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       11. ROADMAP
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="roadmap">
+    <h2>11. Roadmap</h2>
+
+    <table>
+      <thead><tr><th>Phase</th><th>Milestone</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>v1.0 — Current</td>
+          <td>Protocol Launch</td>
+          <td>Six core contracts deployed on BOT Chain. Native BOT and USDT prize support. Single-sport per competition. Manual oracle.</td>
+        </tr>
+        <tr>
+          <td>v1.1</td>
+          <td>Automated Oracle</td>
+          <td>Chainlink-compatible oracle integration. Signed score attestations for auditability. Oracle slashing mechanism for incorrect submissions.</td>
+        </tr>
+        <tr>
+          <td>v1.2</td>
+          <td>On-Chain Arbitration</td>
+          <td>Staked validator committee for dispute resolution. Time-locked dispute window. Arbitration fee split between validators and claimant.</td>
+        </tr>
+        <tr>
+          <td>v1.3</td>
+          <td>Upgradeable Proxies</td>
+          <td>Migrate to OpenZeppelin UUPS proxy pattern with 48-hour timelock on upgrades. Governance multisig replaces single owner.</td>
+        </tr>
+        <tr>
+          <td>v2.0</td>
+          <td>Protocol Token &amp; Governance</td>
+          <td>Introduction of a governance token for fee-sharing with liquidity providers, staking for oracle roles, and on-chain voting on protocol parameters.</td>
+        </tr>
+        <tr>
+          <td>v2.1</td>
+          <td>Live Draft Mode</td>
+          <td>Sequential draft contract allowing participants to pick players turn-by-turn rather than submitting a fixed team at entry time.</td>
+        </tr>
+        <tr>
+          <td>v2.2</td>
+          <td>Cross-Chain Prizes</td>
+          <td>Bridge integration enabling prize claims on Celo Mainnet, Ethereum, and Arbitrum in addition to BOT Chain.</td>
+        </tr>
+        <tr>
+          <td>v3.0</td>
+          <td>ZK Score Proofs</td>
+          <td>Zero-knowledge proofs for score verification, allowing the oracle to prove correct score computation without revealing the full raw data feed.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       12. GLOSSARY
+  ═══════════════════════════════════════════════════ -->
+  <section class="section" id="glossary">
+    <h2>12. Glossary</h2>
+
+    <dl class="glossary">
+      <dt>Basis Points (bps)</dt>
+      <dd>A unit equal to 1/100th of a percentage point. 100 bps = 1%. Used to express the platform fee (default: 250 bps = 2.5%).</dd>
+
+      <dt>BOT Chain</dt>
+      <dd>A custom EVM-compatible blockchain with chain ID 677 and native currency BOT. FantasyChain is deployed on this network.</dd>
+
+      <dt>Claim Window</dt>
+      <dd>The period (default: 90 days from finalization) during which winners may call <code>ClaimManager.claim()</code>. Unclaimed prizes after this window may be swept by the owner.</dd>
+
+      <dt>ClaimManager</dt>
+      <dd>The contract through which winners withdraw their allocated prizes, implementing the pull-payment pattern.</dd>
+
+      <dt>Competition</dt>
+      <dd>A single fantasy sports event created by an organizer. A competition has a sport type, entry fee, submission deadline, prize pool, and lifecycle status.</dd>
+
+      <dt>CompetitionFactory</dt>
+      <dd>The contract that creates and tracks all competitions. Holds the organizer's initial prize pool until finalization or cancellation.</dd>
+
+      <dt>Entry Fee</dt>
+      <dd>The amount a participant must pay (in native BOT or USDT) to submit a team to a competition. May be zero for free competitions.</dd>
+
+      <dt>Finalization</dt>
+      <dd>The transition of a competition to <code>FINALIZED</code> status, after which prize allocations are computed and claims are opened.</dd>
+
+      <dt>keccak256</dt>
+      <dd>The Ethereum-standard cryptographic hash function. Used to hash scoring rules JSON for on-chain commitment.</dd>
+
+      <dt>Non-custodial</dt>
+      <dd>A system design where user funds are held in smart contracts with predetermined withdrawal rules, rather than in operator-controlled wallets.</dd>
+
+      <dt>OpenZeppelin</dt>
+      <dd>An open-source library of audited Solidity smart contract components. FantasyChain uses <code>Ownable</code>, <code>Pausable</code>, and <code>ReentrancyGuard</code> from OpenZeppelin Contracts v5.</dd>
+
+      <dt>Oracle</dt>
+      <dd>An authorized off-chain service that submits real-world athletic performance data (scores) to ScoringManager. Designated per competition at creation time.</dd>
+
+      <dt>PlayerRegistry</dt>
+      <dd>The contract that maintains a global registry of real-world athletes eligible for selection in fantasy competitions.</dd>
+
+      <dt>PrizeEscrow</dt>
+      <dd>The contract that custodies prize pool funds, computes winner allocations upon finalization, and signals ClaimManager to open withdrawals.</dd>
+
+      <dt>Pull Payment</dt>
+      <dd>A payment pattern where recipients actively call a function to withdraw their funds, rather than having funds pushed to them automatically. Mitigates reentrancy and failed-transfer risks.</dd>
+
+      <dt>Registrar</dt>
+      <dd>An address authorized to add, update, and remove players in PlayerRegistry. Separate from the contract owner, allowing a hot wallet to manage player data.</dd>
+
+      <dt>ScoringManager</dt>
+      <dd>The contract that stores oracle-submitted scores for each team in each competition, and provides ranked results to PrizeEscrow.</dd>
+
+      <dt>Scoring Rules Hash</dt>
+      <dd>The <code>keccak256</code> hash of the off-chain JSON document defining how player actions translate into fantasy points. Stored on-chain at competition creation.</dd>
+
+      <dt>Swap-and-Pop</dt>
+      <dd>An O(1) array element removal technique that moves the last element to the vacated index and shortens the array, avoiding expensive array shifting.</dd>
+
+      <dt>TeamManager</dt>
+      <dd>The contract through which participants submit their fantasy team selections and pay entry fees.</dd>
+
+      <dt>USDT</dt>
+      <dd>Tether USD, an ERC-20 stablecoin. Supported as an alternative prize currency to native BOT.</dd>
+
+      <dt>UUPS</dt>
+      <dd>Universal Upgradeable Proxy Standard (ERC-1822). A proxy pattern where upgrade logic lives in the implementation contract rather than the proxy. Planned for v1.3.</dd>
+    </dl>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════════════ -->
+  <footer>
+    <span>FantasyChain — Onchain Fantasy Sports Protocol</span>
+    <span>v1.0.0 · BOT Chain (677) · MIT License</span>
+  </footer>
+
+</div>
+</body>
+</html>

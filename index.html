@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FantasyChain</title>
+<style>
+/* ── Design Tokens ── */
+:root {
+  --bg:        #050a14;
+  --bg2:       #0a1628;
+  --bg3:       #0f1f38;
+  --card:      #0d1a2e;
+  --card2:     #122240;
+  --border:    rgba(30,100,255,0.18);
+  --blue:      #1e64ff;
+  --blue-l:    #3d82ff;
+  --blue-d:    #1245cc;
+  --gold:      #f5c518;
+  --gold-l:    #ffd740;
+  --green:     #00e676;
+  --red:       #ff5252;
+  --text:      #e8f0fe;
+  --text2:     #8fa8cc;
+  --text3:     #4a6a99;
+  --radius:    12px;
+  --radius-l:  20px;
+  --glow-b:    0 0 24px rgba(30,100,255,0.4);
+  --glow-g:    0 0 24px rgba(245,197,24,0.35);
+  --transition: 0.2s ease;
+}
+
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+button{cursor:pointer;border:none;outline:none;font-family:inherit}
+input,select,textarea{font-family:inherit}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--blue-d);border-radius:4px}
+
+/* ── Utilities ── */
+.flex{display:flex}
+.flex-col{display:flex;flex-direction:column}
+.items-center{align-items:center}
+.justify-between{justify-content:space-between}
+.justify-center{justify-content:center}
+.gap-4{gap:1rem}
+.gap-2{gap:.5rem}
+.gap-6{gap:1.5rem}
+.text-center{text-align:center}
+.hidden{display:none!important}
+.w-full{width:100%}
+.relative{position:relative}
+.absolute{position:absolute}
+
+/* ── Background Orbs ── */
+.bg-orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;opacity:.35}
+.bg-orb-1{width:600px;height:600px;background:radial-gradient(circle,rgba(30,100,255,.5),transparent 70%);top:-200px;left:-200px}
+.bg-orb-2{width:500px;height:500px;background:radial-gradient(circle,rgba(245,197,24,.3),transparent 70%);bottom:-100px;right:-100px}
+
+/* ── Navbar ── */
+nav{position:sticky;top:0;z-index:100;background:rgba(5,10,20,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 1rem}
+.nav-inner{max-width:1280px;margin:0 auto;height:64px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.nav-logo{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:1.25rem;letter-spacing:-.5px}
+.nav-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--gold));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.nav-logo span{background:linear-gradient(90deg,var(--blue-l),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;gap:.25rem}
+.nav-link{padding:.4rem .8rem;border-radius:8px;font-size:.88rem;font-weight:500;color:var(--text2);transition:var(--transition)}
+.nav-link:hover,.nav-link.active{color:var(--text);background:var(--bg3)}
+.nav-actions{display:flex;align-items:center;gap:.75rem}
+#wallet-btn{padding:.5rem 1.25rem;border-radius:10px;font-size:.88rem;font-weight:600;background:linear-gradient(135deg,var(--blue),var(--blue-d));color:#fff;transition:var(--transition);box-shadow:var(--glow-b)}
+#wallet-btn:hover{transform:translateY(-1px);box-shadow:0 0 32px rgba(30,100,255,.55)}
+.wallet-info{display:none;align-items:center;gap:.5rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.4rem .9rem;font-size:.85rem}
+.wallet-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.nav-hamburger{display:none;background:none;padding:.4rem;color:var(--text)}
+
+/* ── Page Container ── */
+#app{position:relative;z-index:1;min-height:calc(100vh - 64px)}
+
+/* ── Page ── */
+.page{display:none;padding:2rem 1rem;max-width:1280px;margin:0 auto}
+.page.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Section Headers ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.section-title{font-size:1.5rem;font-weight:700}
+.badge{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .65rem;border-radius:999px;font-size:.75rem;font-weight:600}
+.badge-blue{background:rgba(30,100,255,.15);color:var(--blue-l);border:1px solid rgba(30,100,255,.3)}
+.badge-gold{background:rgba(245,197,24,.12);color:var(--gold-l);border:1px solid rgba(245,197,24,.3)}
+.badge-green{background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.badge-red{background:rgba(255,82,82,.12);color:var(--red);border:1px solid rgba(255,82,82,.3)}
+
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-l);padding:1.5rem;transition:var(--transition)}
+.card:hover{border-color:rgba(30,100,255,.35);box-shadow:var(--glow-b)}
+.card-sm{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.6rem 1.4rem;border-radius:10px;font-size:.9rem;font-weight:600;transition:var(--transition);cursor:pointer}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue-d));color:#fff;box-shadow:var(--glow-b)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 0 32px rgba(30,100,255,.55)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#cc9a00);color:#0a0a0a;box-shadow:var(--glow-g)}
+.btn-gold:hover{transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--blue);color:var(--text)}
+.btn-sm{padding:.4rem .9rem;font-size:.82rem}
+.btn-danger{background:rgba(255,82,82,.15);border:1px solid rgba(255,82,82,.3);color:var(--red)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+/* ── Inputs ── */
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem}
+.form-label{font-size:.85rem;font-weight:600;color:var(--text2)}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:.65rem 1rem;color:var(--text);font-size:.9rem;transition:var(--transition);width:100%}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,100,255,.15)}
+.form-select option{background:var(--bg3)}
+.form-textarea{resize:vertical;min-height:80px}
+
+/* ── Grid ── */
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem}
+@media(max-width:900px){.grid-3{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* ── Toast ── */
+#toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;display:flex;flex-direction:column;gap:.5rem}
+.toast{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius);padding:.8rem 1.2rem;font-size:.88rem;min-width:240px;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:slideIn .3s ease}
+.toast-success{border-left:3px solid var(--green)}
+.toast-error{border-left:3px solid var(--red)}
+.toast-info{border-left:3px solid var(--blue)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex;animation:fadeIn .2s ease}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-l);padding:2rem;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;position:relative}
+.modal-title{font-size:1.3rem;font-weight:700;margin-bottom:1.5rem}
+.modal-close{position:absolute;top:1rem;right:1rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.4rem .7rem;color:var(--text2);cursor:pointer;font-size:.9rem}
+
+/* ─────────────────────────── LANDING PAGE ─────────────────────────────── */
+.hero{text-align:center;padding:5rem 1rem 4rem;position:relative}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:.5rem;background:rgba(30,100,255,.12);border:1px solid rgba(30,100,255,.25);border-radius:999px;padding:.4rem 1rem;font-size:.82rem;font-weight:600;color:var(--blue-l);margin-bottom:1.5rem}
+.hero-title{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.1;letter-spacing:-1.5px;margin-bottom:1.25rem}
+.hero-title .accent{background:linear-gradient(90deg,var(--blue-l),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:1.15rem;color:var(--text2);max-width:580px;margin:0 auto 2.5rem}
+.hero-ctas{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;max-width:700px;margin:4rem auto 0}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-l);padding:1.5rem;text-align:center}
+.stat-num{font-size:2rem;font-weight:800;background:linear-gradient(90deg,var(--blue-l),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:.85rem;color:var(--text2);margin-top:.25rem}
+
+.features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;max-width:900px;margin:5rem auto 0}
+.feature-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-l);padding:1.5rem}
+.feature-icon{font-size:2rem;margin-bottom:1rem}
+.feature-title{font-size:1rem;font-weight:700;margin-bottom:.5rem}
+.feature-desc{font-size:.88rem;color:var(--text2);line-height:1.6}
+
+/* ── Competition Card ── */
+.comp-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-l);overflow:hidden;transition:var(--transition);cursor:pointer}
+.comp-card:hover{transform:translateY(-3px);border-color:rgba(30,100,255,.4);box-shadow:0 12px 40px rgba(0,0,0,.4),var(--glow-b)}
+.comp-card-header{padding:1.25rem 1.25rem .75rem;display:flex;align-items:center;justify-content:space-between}
+.comp-sport-icon{font-size:1.8rem}
+.comp-card-body{padding:.75rem 1.25rem 1.25rem}
+.comp-card-name{font-size:1.05rem;font-weight:700;margin-bottom:.5rem}
+.comp-card-meta{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.75rem}
+.comp-meta-item{background:var(--bg3);border-radius:8px;padding:.5rem .75rem}
+.comp-meta-label{font-size:.72rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.comp-meta-value{font-size:.9rem;font-weight:700;margin-top:.1rem}
+.comp-card-footer{padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.progress-bar-wrap{flex:1;height:4px;background:var(--bg3);border-radius:4px;margin-right:.75rem;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--gold));border-radius:4px;transition:.5s ease}
+
+/* ── Player Card ── */
+.player-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;cursor:pointer;transition:var(--transition);position:relative;user-select:none}
+.player-card:hover{border-color:rgba(30,100,255,.4)}
+.player-card.selected{border-color:var(--blue);background:rgba(30,100,255,.12);box-shadow:var(--glow-b)}
+.player-card.selected::after{content:'✓';position:absolute;top:.5rem;right:.5rem;width:20px;height:20px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700}
+.player-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--blue-d),var(--bg3));display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;margin-bottom:.75rem;color:var(--text)}
+.player-name{font-size:.9rem;font-weight:700;margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-team-name{font-size:.78rem;color:var(--text2)}
+.player-pos-badge{display:inline-block;padding:.15rem .5rem;border-radius:999px;font-size:.7rem;font-weight:700;background:rgba(30,100,255,.2);color:var(--blue-l);margin-top:.4rem}
+.player-status-active{color:var(--green)}
+.player-status-injured{color:var(--red)}
+.player-status-suspended{color:var(--gold)}
+
+/* ── Leaderboard ── */
+.podium{display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:1rem;margin-bottom:2rem;align-items:end}
+.podium-slot{text-align:center;padding:1.5rem 1rem;border-radius:var(--radius-l);position:relative}
+.podium-1{background:linear-gradient(135deg,rgba(245,197,24,.15),rgba(245,197,24,.05));border:1px solid rgba(245,197,24,.35)}
+.podium-2{background:linear-gradient(135deg,rgba(192,192,192,.12),rgba(192,192,192,.04));border:1px solid rgba(192,192,192,.25)}
+.podium-3{background:linear-gradient(135deg,rgba(205,127,50,.12),rgba(205,127,50,.04));border:1px solid rgba(205,127,50,.25)}
+.podium-crown{font-size:2rem;margin-bottom:.5rem}
+.podium-rank{font-size:.75rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:.25rem}
+.podium-name{font-size:.95rem;font-weight:700;margin-bottom:.25rem}
+.podium-score{font-size:1.4rem;font-weight:800}
+.podium-prize{font-size:.82rem;color:var(--gold);margin-top:.25rem}
+
+.leaderboard-row{display:grid;grid-template-columns:2.5rem 1fr auto auto;align-items:center;gap:1rem;padding:.8rem 1rem;border-radius:var(--radius);background:var(--card);border:1px solid var(--border);margin-bottom:.5rem;transition:var(--transition)}
+.leaderboard-row:hover{border-color:rgba(30,100,255,.3)}
+.lb-rank{font-size:.85rem;font-weight:700;color:var(--text2);text-align:center}
+.lb-rank.rank-1{color:var(--gold)}
+.lb-rank.rank-2{color:#c0c0c0}
+.lb-rank.rank-3{color:#cd7f32}
+.lb-name{font-weight:600;font-size:.92rem}
+.lb-addr{font-size:.75rem;color:var(--text3)}
+.lb-score{font-weight:800;font-size:1rem}
+.lb-prize{font-size:.82rem;color:var(--gold);text-align:right}
+
+/* ── Team Builder ── */
+.team-builder{display:grid;grid-template-columns:1fr 320px;gap:1.5rem;align-items:start}
+@media(max-width:900px){.team-builder{grid-template-columns:1fr}}
+.team-builder-filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.filter-btn{padding:.35rem .9rem;border-radius:999px;font-size:.8rem;font-weight:600;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:var(--transition)}
+.filter-btn:hover,.filter-btn.active{background:rgba(30,100,255,.2);border-color:var(--blue);color:var(--text)}
+.player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem;max-height:520px;overflow-y:auto;padding:.25rem}
+.team-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-l);padding:1.25rem;position:sticky;top:5rem}
+.team-panel-title{font-size:1rem;font-weight:700;margin-bottom:1rem}
+.team-slots{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.25rem;min-height:200px}
+.team-slot{background:var(--bg3);border:1px dashed var(--border);border-radius:var(--radius);padding:.65rem;font-size:.82rem;color:var(--text3);text-align:center;transition:var(--transition)}
+.team-slot.filled{background:rgba(30,100,255,.12);border:1px solid var(--blue);color:var(--text);display:flex;align-items:center;justify-content:space-between}
+.team-slot-remove{background:none;border:none;color:var(--red);font-size:.9rem;cursor:pointer;padding:0 .25rem}
+.team-entry-info{background:var(--bg3);border-radius:var(--radius);padding:.75rem;margin-bottom:1rem;font-size:.85rem}
+
+/* ── Dashboard ── */
+.user-team-card{background:linear-gradient(135deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:var(--radius-l);padding:1.5rem;position:relative;overflow:hidden}
+.user-team-card::before{content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:radial-gradient(circle,rgba(30,100,255,.2),transparent 70%);border-radius:50%}
+.user-team-sport{font-size:2.5rem;position:absolute;top:1rem;right:1.25rem;opacity:.5}
+.claimable-banner{background:linear-gradient(135deg,rgba(245,197,24,.15),rgba(245,197,24,.05));border:1px solid rgba(245,197,24,.35);border-radius:var(--radius-l);padding:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+
+/* ── Countdown ── */
+.countdown{display:flex;gap:.4rem}
+.countdown-unit{background:var(--bg3);border-radius:8px;padding:.4rem .6rem;text-align:center;min-width:48px}
+.countdown-num{font-size:1.1rem;font-weight:800;line-height:1}
+.countdown-label{font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+
+/* ── Score Ticker ── */
+.score-ticker{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.5rem}
+.score-ticker-inner{display:flex;gap:2rem;padding:.5rem 1rem;animation:ticker 20s linear infinite}
+.score-ticker:hover .score-ticker-inner{animation-play-state:paused}
+.ticker-item{display:flex;align-items:center;gap:.75rem;white-space:nowrap;font-size:.85rem}
+.ticker-team{font-weight:600}
+.ticker-score{font-weight:800;padding:.15rem .5rem;border-radius:6px;background:rgba(30,100,255,.15);color:var(--blue-l)}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── Organizer / Admin ── */
+.admin-grid{display:grid;grid-template-columns:240px 1fr;gap:1.5rem;align-items:start}
+@media(max-width:768px){.admin-grid{grid-template-columns:1fr}}
+.admin-nav{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-l);padding:1rem}
+.admin-nav-item{display:flex;align-items:center;gap:.75rem;padding:.6rem .8rem;border-radius:var(--radius);font-size:.88rem;font-weight:500;color:var(--text2);cursor:pointer;transition:var(--transition);margin-bottom:.25rem}
+.admin-nav-item:hover,.admin-nav-item.active{background:rgba(30,100,255,.12);color:var(--text);border:1px solid rgba(30,100,255,.2)}
+.admin-panel{display:none}
+.admin-panel.active{display:block;animation:fadeIn .2s ease}
+
+/* ── Status indicator ── */
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.status-open{background:var(--green);box-shadow:0 0 8px var(--green)}
+.status-closed{background:var(--text3)}
+.status-scoring{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+.status-disputed{background:var(--red);box-shadow:0 0 8px var(--red)}
+.status-finalized{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.status-cancelled{background:var(--text3)}
+
+/* ── Spinner ── */
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Empty State ── */
+.empty-state{text-align:center;padding:4rem 1rem}
+.empty-icon{font-size:3.5rem;margin-bottom:1rem;opacity:.4}
+.empty-text{color:var(--text2);font-size:.95rem}
+
+/* ── Responsive nav ── */
+@media(max-width:768px){
+  .nav-links{display:none}
+  .nav-hamburger{display:flex}
+  .nav-links.mobile-open{display:flex;flex-direction:column;position:fixed;top:64px;left:0;right:0;background:var(--bg2);border-bottom:1px solid var(--border);padding:1rem;z-index:99;gap:.25rem}
+  .hero-title{font-size:2.2rem}
+  .hero-stats{grid-template-columns:1fr}
+  .podium{grid-template-columns:1fr;align-items:start}
+  .team-builder{grid-template-columns:1fr}
+  .admin-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Wallet Connect Modal -->
+<div class="modal-overlay" id="wallet-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('wallet-modal')">✕</button>
+    <div class="modal-title">Connect Wallet</div>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:1.5rem">Connect your MetaMask wallet to BOT Chain (Chain ID 677) to participate in FantasyChain competitions.</p>
+    <button class="btn btn-primary w-full" id="metamask-connect-btn" onclick="connectMetaMask()">
+      <span style="font-size:1.1rem">🦊</span> Connect MetaMask
+    </button>
+    <div style="margin-top:1rem;text-align:center;font-size:.82rem;color:var(--text3)">
+      By connecting you agree to the Terms of Service
+    </div>
+  </div>
+</div>
+
+<!-- Create Competition Modal -->
+<div class="modal-overlay" id="create-comp-modal">
+  <div class="modal" style="max-width:580px">
+    <button class="modal-close" onclick="closeModal('create-comp-modal')">✕</button>
+    <div class="modal-title">🏆 Create Competition</div>
+    <div class="form-group">
+      <label class="form-label">Competition Name</label>
+      <input class="form-input" id="cc-name" placeholder="e.g. Premier League Fantasy Week 12">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Sport</label>
+        <select class="form-select" id="cc-sport">
+          <option value="4">⚽ Soccer</option>
+          <option value="0">🏈 Football</option>
+          <option value="1">🏀 Basketball</option>
+          <option value="2">🏏 Cricket</option>
+          <option value="3">⚾ Baseball</option>
+          <option value="5">🎾 Tennis</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Entry Fee (BOT)</label>
+        <input class="form-input" id="cc-fee" type="number" step="0.001" min="0" placeholder="0 = free">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Max Teams</label>
+        <input class="form-input" id="cc-max" type="number" min="0" placeholder="0 = unlimited">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prize Pool (BOT)</label>
+        <input class="form-input" id="cc-prize" type="number" step="0.1" min="0.01" placeholder="e.g. 10">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Deadline</label>
+      <input class="form-input" id="cc-deadline" type="datetime-local">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Oracle Address</label>
+      <input class="form-input" id="cc-oracle" placeholder="0x...">
+    </div>
+    <button class="btn btn-primary w-full" onclick="createCompetition()" style="margin-top:.5rem">
+      Deploy Competition
+    </button>
+  </div>
+</div>
+
+<!-- Navbar -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#" onclick="navigate('landing')">
+      <div class="nav-logo-icon">⚡</div>
+      <span>FantasyChain</span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a class="nav-link" href="#" onclick="navigate('competitions')">Competitions</a>
+      <a class="nav-link" href="#" onclick="navigate('dashboard')">Dashboard</a>
+      <a class="nav-link" href="#" onclick="navigate('leaderboard')">Leaderboard</a>
+      <a class="nav-link" href="#" onclick="navigate('organizer')">Organizer</a>
+      <a class="nav-link" href="#" onclick="navigate('admin')">Admin</a>
+      <a class="nav-link" href="#" onclick="navigate('whitepaper')">Whitepaper</a>
+    </div>
+    <div class="nav-actions">
+      <div class="wallet-info" id="wallet-info">
+        <div class="wallet-dot"></div>
+        <span id="wallet-addr">0x...1234</span>
+        <span id="wallet-balance" style="color:var(--gold);font-weight:700"></span>
+      </div>
+      <button id="wallet-btn" onclick="openModal('wallet-modal')">Connect Wallet</button>
+      <button class="nav-hamburger" onclick="toggleMobileNav()">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div id="app">
+
+<!-- ═══════════════════════════ LANDING PAGE ════════════════════════════ -->
+<div class="page active" id="page-landing">
+  <div class="hero">
+    <div class="hero-eyebrow">⚡ Powered by BOT Chain · Zero Gas Fees</div>
+    <h1 class="hero-title">Fantasy Sports on<br>the <span class="accent">Blockchain</span></h1>
+    <p class="hero-sub">Build your dream team, compete with players worldwide, and win real prizes — all on-chain, fully transparent, with instant payouts.</p>
+    <div class="hero-ctas">
+      <button class="btn btn-primary" onclick="navigate('competitions')" style="font-size:1rem;padding:.8rem 2rem">🏆 Explore Competitions</button>
+      <button class="btn btn-outline" onclick="navigate('organizer')" style="font-size:1rem;padding:.8rem 2rem">Create Competition</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-competitions">247</div>
+        <div class="stat-label">Total Competitions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-prizes">$124K</div>
+        <div class="stat-label">Prizes Distributed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-players">18.4K</div>
+        <div class="stat-label">Active Players</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⛓️</div>
+      <div class="feature-title">Fully On-Chain</div>
+      <div class="feature-desc">Every team, score, and prize is recorded on BOT Chain. No backend, no trust needed — just pure smart contract logic.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Instant Payouts</div>
+      <div class="feature-desc">Winners claim prizes directly from the smart contract the moment results are finalized. No waiting, no middlemen.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔮</div>
+      <div class="feature-title">Oracle-Verified</div>
+      <div class="feature-desc">Scores are submitted by authorized oracles with a 48-hour dispute window ensuring fair play for all participants.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <div class="feature-title">Escrow Protected</div>
+      <div class="feature-desc">Prize pools are locked in PrizeEscrow contracts — organizers can't run away with funds once a competition starts.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏆</div>
+      <div class="feature-title">Multi-Sport</div>
+      <div class="feature-desc">Soccer, basketball, football, cricket, baseball and tennis — build fantasy teams across all major sports.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌍</div>
+      <div class="feature-title">Global Access</div>
+      <div class="feature-desc">Anyone with a Web3 wallet can join. No KYC, no account creation — connect and play in under 60 seconds.</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:5rem;padding:3rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-l);max-width:700px;margin-left:auto;margin-right:auto">
+    <div style="font-size:2.5rem;margin-bottom:1rem">🚀</div>
+    <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:.75rem">Ready to compete?</h2>
+    <p style="color:var(--text2);margin-bottom:1.5rem;font-size:.95rem">Join thousands of fantasy sports fans earning real rewards on-chain.</p>
+    <button class="btn btn-gold" onclick="navigate('competitions')" style="font-size:1rem;padding:.8rem 2.5rem">Start Playing Now</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ COMPETITIONS ════════════════════════════ -->
+<div class="page" id="page-competitions">
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Competitions</h1>
+      <div style="font-size:.88rem;color:var(--text2);margin-top:.25rem">Find and join fantasy sports competitions</div>
+    </div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <select class="form-select" id="comp-filter-sport" style="width:auto" onchange="filterCompetitions()">
+        <option value="">All Sports</option>
+        <option value="4">⚽ Soccer</option>
+        <option value="0">🏈 Football</option>
+        <option value="1">🏀 Basketball</option>
+        <option value="2">🏏 Cricket</option>
+        <option value="3">⚾ Baseball</option>
+        <option value="5">🎾 Tennis</option>
+      </select>
+      <select class="form-select" id="comp-filter-status" style="width:auto" onchange="filterCompetitions()">
+        <option value="">All Statuses</option>
+        <option value="0">Open</option>
+        <option value="1">Closed</option>
+        <option value="4">Finalized</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Score Ticker -->
+  <div class="score-ticker">
+    <div class="score-ticker-inner" id="score-ticker">
+      <span class="ticker-item"><span class="ticker-team">Man City vs Arsenal</span><span class="ticker-score">2-1</span></span>
+      <span class="ticker-item"><span class="ticker-team">Lakers vs Warriors</span><span class="ticker-score">112-108</span></span>
+      <span class="ticker-item"><span class="ticker-team">Barcelona vs Real Madrid</span><span class="ticker-score">1-2</span></span>
+      <span class="ticker-item"><span class="ticker-team">Celtics vs Heat</span><span class="ticker-score">98-95</span></span>
+      <span class="ticker-item"><span class="ticker-team">PSG vs Juventus</span><span class="ticker-score">3-0</span></span>
+      <!-- duplicate for seamless loop -->
+      <span class="ticker-item"><span class="ticker-team">Man City vs Arsenal</span><span class="ticker-score">2-1</span></span>
+      <span class="ticker-item"><span class="ticker-team">Lakers vs Warriors</span><span class="ticker-score">112-108</span></span>
+      <span class="ticker-item"><span class="ticker-team">Barcelona vs Real Madrid</span><span class="ticker-score">1-2</span></span>
+      <span class="ticker-item"><span class="ticker-team">Celtics vs Heat</span><span class="ticker-score">98-95</span></span>
+      <span class="ticker-item"><span class="ticker-team">PSG vs Juventus</span><span class="ticker-score">3-0</span></span>
+    </div>
+  </div>
+
+  <div class="grid-auto" id="competitions-grid">
+    <!-- Populated by JS -->
+  </div>
+</div>
+
+<!-- ═══════════════════════════ COMPETITION DETAIL ══════════════════════ -->
+<div class="page" id="page-comp-detail">
+  <button class="btn btn-outline btn-sm" onclick="navigate('competitions')" style="margin-bottom:1.25rem">← Back</button>
+  <div id="comp-detail-content"></div>
+</div>
+
+<!-- ═══════════════════════════ TEAM BUILDER ════════════════════════════ -->
+<div class="page" id="page-team-builder">
+  <button class="btn btn-outline btn-sm" onclick="navigate('comp-detail')" style="margin-bottom:1.25rem">← Back to Competition</button>
+  <div class="section-header">
+    <div>
+      <h1 class="section-title" id="tb-title">Build Your Team</h1>
+      <div style="font-size:.88rem;color:var(--text2)" id="tb-subtitle">Select players for your fantasy lineup</div>
+    </div>
+    <div class="badge badge-blue" id="tb-counter">0 / 0 players</div>
+  </div>
+
+  <div class="team-builder">
+    <div>
+      <div class="team-builder-filters" id="tb-filters">
+        <button class="filter-btn active" onclick="filterPlayers('all',this)">All</button>
+        <button class="filter-btn" onclick="filterPlayers('GK',this)">GK</button>
+        <button class="filter-btn" onclick="filterPlayers('DEF',this)">DEF</button>
+        <button class="filter-btn" onclick="filterPlayers('MID',this)">MID</button>
+        <button class="filter-btn" onclick="filterPlayers('FWD',this)">FWD</button>
+      </div>
+      <div class="player-grid" id="player-pool-grid"></div>
+    </div>
+    <div class="team-panel">
+      <div class="team-panel-title">Your Team</div>
+      <div class="form-group">
+        <label class="form-label">Team Name</label>
+        <input class="form-input" id="tb-team-name" placeholder="e.g. Dream Team FC">
+      </div>
+      <div class="team-slots" id="team-slots"></div>
+      <div class="team-entry-info" id="team-entry-info"></div>
+      <button class="btn btn-primary w-full" id="tb-submit" onclick="submitTeam()" disabled>
+        Submit Team
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ DASHBOARD ═══════════════════════════════ -->
+<div class="page" id="page-dashboard">
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Player Dashboard</h1>
+      <div style="font-size:.88rem;color:var(--text2)" id="dash-addr-label">Your active teams and prizes</div>
+    </div>
+  </div>
+  <div id="claimable-section"></div>
+  <div id="dashboard-teams"></div>
+</div>
+
+<!-- ═══════════════════════════ LEADERBOARD ════════════════════════════ -->
+<div class="page" id="page-leaderboard">
+  <div class="section-header">
+    <h1 class="section-title">Leaderboard</h1>
+    <select class="form-select" id="lb-comp-select" style="width:auto" onchange="loadLeaderboard()">
+      <option value="">Select Competition</option>
+    </select>
+  </div>
+  <div id="podium-section"></div>
+  <div id="leaderboard-list"></div>
+</div>
+
+<!-- ═══════════════════════════ ORGANIZER ══════════════════════════════ -->
+<div class="page" id="page-organizer">
+  <div class="section-header">
+    <h1 class="section-title">Organizer Dashboard</h1>
+    <button class="btn btn-primary" onclick="openModal('create-comp-modal')">+ New Competition</button>
+  </div>
+  <div class="admin-grid">
+    <div class="admin-nav">
+      <div class="admin-nav-item active" onclick="showOrgPanel('create')">➕ Create</div>
+      <div class="admin-nav-item" onclick="showOrgPanel('manage')">📋 Manage</div>
+      <div class="admin-nav-item" onclick="showOrgPanel('results')">📊 Submit Results</div>
+      <div class="admin-nav-item" onclick="showOrgPanel('prizes')">💰 Distribute</div>
+    </div>
+    <div>
+      <div class="admin-panel active" id="org-create">
+        <div class="card">
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.25rem">Quick Create Competition</h3>
+          <div class="form-group"><label class="form-label">Competition Name</label><input class="form-input" id="org-name" placeholder="e.g. UCL Fantasy Week 1"></div>
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label">Sport</label><select class="form-select" id="org-sport"><option value="4">⚽ Soccer</option><option value="0">🏈 Football</option><option value="1">🏀 Basketball</option><option value="2">🏏 Cricket</option></select></div>
+            <div class="form-group"><label class="form-label">Entry Fee (BOT)</label><input class="form-input" id="org-fee" type="number" step="0.001" min="0" value="0.01"></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label class="form-label">Max Teams</label><input class="form-input" id="org-max" type="number" value="100"></div>
+            <div class="form-group"><label class="form-label">Prize Pool (BOT)</label><input class="form-input" id="org-prize" type="number" step="0.1" value="10"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Deadline</label><input class="form-input" id="org-deadline" type="datetime-local"></div>
+          <div class="form-group"><label class="form-label">Oracle Address</label><input class="form-input" id="org-oracle" placeholder="0x... (your oracle address)"></div>
+          <button class="btn btn-primary" onclick="createCompetition()">🚀 Deploy Competition</button>
+        </div>
+      </div>
+      <div class="admin-panel" id="org-manage">
+        <div id="org-competitions-list"></div>
+      </div>
+      <div class="admin-panel" id="org-results">
+        <div class="card">
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.25rem">Submit Oracle Results</h3>
+          <div class="form-group"><label class="form-label">Competition ID</label><input class="form-input" id="res-comp-id" type="number" placeholder="1"></div>
+          <div class="form-group"><label class="form-label">Player IDs (comma separated)</label><input class="form-input" id="res-player-ids" placeholder="1,2,3,4,5"></div>
+          <div class="form-group"><label class="form-label">Player Scores (comma separated)</label><input class="form-input" id="res-scores" placeholder="25,30,15,40,22"></div>
+          <div class="form-group"><label class="form-label">Data Hash (optional — auto-generated if empty)</label><input class="form-input" id="res-hash" placeholder="0x..."></div>
+          <button class="btn btn-primary" onclick="submitOracleResults()">Submit Results</button>
+        </div>
+      </div>
+      <div class="admin-panel" id="org-prizes">
+        <div class="card">
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.25rem">Finalize & Distribute Prizes</h3>
+          <div class="form-group"><label class="form-label">Competition ID</label><input class="form-input" id="dist-comp-id" type="number" placeholder="1"></div>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem">
+            <button class="btn btn-primary" onclick="finalizeCompetition()">Finalize Competition</button>
+            <button class="btn btn-gold" onclick="pullEscrowFunds()">Pull Escrow Funds</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ ADMIN ══════════════════════════════════ -->
+<div class="page" id="page-admin">
+  <div class="section-header">
+    <h1 class="section-title">Admin Dashboard</h1>
+    <div class="badge badge-red">🔑 Owner Only</div>
+  </div>
+  <div class="admin-grid">
+    <div class="admin-nav">
+      <div class="admin-nav-item active" onclick="showAdminPanel('system')">⚙️ System</div>
+      <div class="admin-nav-item" onclick="showAdminPanel('oracles')">🔮 Oracles</div>
+      <div class="admin-nav-item" onclick="showAdminPanel('registry')">📋 Registry</div>
+      <div class="admin-nav-item" onclick="showAdminPanel('sweeper')">🧹 Sweeper</div>
+    </div>
+    <div>
+      <div class="admin-panel active" id="admin-system">
+        <div class="card">
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.25rem">Contract Controls</h3>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem">
+            <button class="btn btn-outline" onclick="pauseContracts()">⏸ Pause All</button>
+            <button class="btn btn-primary" onclick="unpauseContracts()">▶ Unpause All</button>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;margin-bottom:.75rem">Platform Fee</h3>
+          <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+            <input class="form-input" id="admin-fee-bps" type="number" placeholder="250 = 2.5%" style="width:160px">
+            <button class="btn btn-primary btn-sm" onclick="setPlatformFee()">Update Fee</button>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;margin:.1.25rem 0 .75rem;margin-top:1.25rem">Fee Recipient</h3>
+          <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+            <input class="form-input" id="admin-fee-addr" placeholder="0x..." style="flex:1">
+            <button class="btn btn-primary btn-sm" onclick="setFeeRecipient()">Update</button>
+          </div>
+        </div>
+      </div>
+      <div class="admin-panel" id="admin-oracles">
+        <div class="card">
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.25rem">Oracle Management</h3>
+          <div class="form-group"><label class="form-label">Oracle Address</label><input class="form-input" id="admin-oracle-addr" placeholder="0x..."></div>
+          <div style="display:flex;gap:.75rem">
+            <button class="btn btn-primary" onclick="authorizeOracle(true)">✓ Authorize</button>
+            <button class="btn btn-danger" onclick="authorizeOracle(false)">✗ Revoke</button>
+          </div>
+        </div>
+      </div>
+      <div class="admin-panel" id="admin-registry">
+        <div class="card">
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.25rem">Batch Register Players</h3>
+          <div class="form-group"><label class="form-label">Competition ID</label><input class="form-input" id="reg-comp-id" type="number" placeholder="1"></div>
+          <div class="form-group"><label class="form-label">Player Names (one per line)</label><textarea class="form-textarea" id="reg-names" placeholder="Lionel Messi&#10;Erling Haaland&#10;Kylian Mbappé"></textarea></div>
+          <div class="form-group"><label class="form-label">Teams (one per line, matching names)</label><textarea class="form-textarea" id="reg-teams" placeholder="Inter Miami&#10;Man City&#10;Real Madrid"></textarea></div>
+          <div class="form-group"><label class="form-label">Positions (comma separated, 0=GK 1=DEF 2=MID 3=FWD)</label><input class="form-input" id="reg-positions" placeholder="3,3,3"></div>
+          <button class="btn btn-primary" onclick="batchRegisterPlayers()">Register Players</button>
+        </div>
+      </div>
+      <div class="admin-panel" id="admin-sweeper">
+        <div class="card">
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.25rem">Sweep Unclaimed Prizes</h3>
+          <div class="form-group"><label class="form-label">Competition ID</label><input class="form-input" id="sweep-comp-id" type="number" placeholder="1"></div>
+          <div class="form-group"><label class="form-label">Recipient Address</label><input class="form-input" id="sweep-addr" placeholder="0x..."></div>
+          <button class="btn btn-danger" onclick="sweepUnclaimed()">Sweep Unclaimed Funds</button>
+          <p style="font-size:.8rem;color:var(--text3);margin-top:.5rem">Only available 90 days after finalization.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ WHITEPAPER ══════════════════════════════ -->
+<div class="page" id="page-whitepaper">
+  <div style="max-width:800px;margin:0 auto">
+    <div style="text-align:center;padding:2rem 0 3rem;border-bottom:1px solid var(--border);margin-bottom:2.5rem">
+      <div style="font-size:3rem;margin-bottom:1rem">⚡</div>
+      <h1 style="font-size:2.5rem;font-weight:900;margin-bottom:.75rem">FantasyChain Whitepaper</h1>
+      <p style="color:var(--text2)">Decentralized Fantasy Sports Protocol on BOT Chain</p>
+      <div style="font-size:.85rem;color:var(--text3);margin-top:.5rem">Version 1.0 · BOT Chain (Chain ID 677)</div>
+    </div>
+    <a class="btn btn-primary btn-sm" href="whitepaper.html" target="_blank" style="margin-bottom:2rem">Open Full Whitepaper →</a>
+    <div class="card" style="margin-bottom:1.5rem">
+      <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem">Executive Summary</h2>
+      <p style="color:var(--text2);font-size:.93rem;line-height:1.75">FantasyChain is a fully decentralized fantasy sports protocol deployed on BOT Chain (Chain ID 677). It enables anyone to create or join competitions, build teams from real-world player rosters, have performance scores submitted by trusted oracles, and claim prizes from escrow contracts — all without a central authority. The protocol is composed of six interdependent smart contracts: CompetitionFactory, PlayerRegistry, TeamManager, ScoringManager, PrizeEscrow, and ClaimManager.</p>
+    </div>
+    <div class="card">
+      <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem">Contract Architecture</h2>
+      <div style="display:flex;flex-direction:column;gap:.75rem">
+        <div class="card-sm"><strong>CompetitionFactory</strong> — Creates and manages competitions with entry fees, prize pools, deadlines, and oracle assignments.</div>
+        <div class="card-sm"><strong>PlayerRegistry</strong> — Admin-managed registry of real-world athletes with positions, teams, and status updates.</div>
+        <div class="card-sm"><strong>TeamManager</strong> — Handles team creation, entry fee collection, and player validation per competition.</div>
+        <div class="card-sm"><strong>ScoringManager</strong> — Oracle-submitted match results with 48-hour dispute windows and score aggregation.</div>
+        <div class="card-sm"><strong>PrizeEscrow</strong> — Custodian of prize funds with emergency withdrawal and ClaimManager release mechanism.</div>
+        <div class="card-sm"><strong>ClaimManager</strong> — Distributes prizes (50/30/20 default) to ranked winners with reentrancy protection.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+<script>
+// ═══════════════════════════ CONFIG ════════════════════════════════════════
+const CONFIG = {
+  chainId: 677,
+  chainName: 'BOT Chain',
+  rpcUrls: ['https://rpc.botchain.network'],
+  nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 },
+  blockExplorerUrls: ['https://explorer.botchain.network'],
+  contracts: {
+    CompetitionFactory: '0x0000000000000000000000000000000000000001',
+    PlayerRegistry:     '0x0000000000000000000000000000000000000002',
+    TeamManager:        '0x0000000000000000000000000000000000000003',
+    ScoringManager:     '0x0000000000000000000000000000000000000004',
+    PrizeEscrow:        '0x0000000000000000000000000000000000000005',
+    ClaimManager:       '0x0000000000000000000000000000000000000006',
+  },
+  demoMode: true // set false when contracts deployed
+};
+
+// ─── Minimal ABIs ───────────────────────────────────────────────────────────
+const ABIS = {
+  CompetitionFactory: [
+    "function createCompetition(string,uint8,uint256,uint256,uint256,address,bytes32) payable returns(uint256)",
+    "function getCompetition(uint256) view returns(tuple(uint256,address,string,uint8,uint256,uint256,uint256,uint256,uint8,address,address,bytes32,uint8,uint256,uint256))",
+    "function listCompetitions(uint8,uint256,uint256) view returns(tuple(uint256,address,string,uint8,uint256,uint256,uint256,uint256,uint8,address,address,bytes32,uint8,uint256,uint256)[],uint256)",
+    "function cancelCompetition(uint256)",
+    "function setPlatformFee(uint256)",
+    "function setFeeRecipient(address)",
+    "function pause()",
+    "function unpause()",
+    "event CompetitionCreated(uint256 indexed,address indexed,string,uint8,uint256,uint256,uint256,uint8)"
+  ],
+  TeamManager: [
+    "function createTeam(uint256,string,uint256[]) payable returns(uint256)",
+    "function getUserTeam(uint256,address) view returns(tuple(uint256,address,uint256,uint256[],string,uint256,bool))",
+    "function getCompetitionTeamDetails(uint256) view returns(tuple(uint256,address,uint256,uint256[],string,uint256,bool)[])"
+  ],
+  ScoringManager: [
+    "function submitMatchResult(uint256,bytes32,uint256[],int256[]) returns(uint256)",
+    "function finalizeCompetition(uint256)",
+    "function getTeamScore(uint256) view returns(tuple(uint256,int256,uint256,bool))",
+    "function getCompetitionRankings(uint256) view returns(uint256[])",
+    "function finalizedAt(uint256) view returns(uint256)"
+  ],
+  ClaimManager: [
+    "function claimPrize(uint256)",
+    "function pullFromEscrow(uint256,address)",
+    "function getClaimableAmount(uint256,address) view returns(uint256,uint256)",
+    "function getClaim(uint256,address) view returns(tuple(address,uint256,uint256,uint256,uint256,bool))"
+  ],
+  PlayerRegistry: [
+    "function batchRegisterPlayers(uint256,string[],string[],uint8[],uint8[]) returns(uint256)",
+    "function getCompetitionPlayerDetails(uint256) view returns(tuple(uint256,string,string,uint8,uint8,uint8,uint256,bool)[])"
+  ]
+};
+
+// ═══════════════════════════ STATE ═════════════════════════════════════════
+let state = {
+  account: null,
+  provider: null,
+  signer: null,
+  currentPage: 'landing',
+  currentCompId: null,
+  selectedPlayers: [],
+  competitions: [],
+  mockData: true
+};
+
+// ═══════════════════════════ MOCK DATA ═════════════════════════════════════
+const MOCK_COMPETITIONS = [
+  { id:1, name:'UEFA Champions League Fantasy W12', sport:4, sportName:'Soccer', sportIcon:'⚽', entryFee:'0.01', prizePool:'50', deadline: Date.now()/1000+86400*3, status:0, statusName:'Open', teamsCount:142, maxTeams:500, currency:0, organizer:'0xOrg1' },
+  { id:2, name:'NBA Fantasy December',             sport:1, sportName:'Basketball', sportIcon:'🏀', entryFee:'0.005',prizePool:'25', deadline: Date.now()/1000+86400*5, status:0, statusName:'Open', teamsCount:89, maxTeams:200, currency:0, organizer:'0xOrg2' },
+  { id:3, name:'NFL Week 15 Fantasy',              sport:0, sportName:'Football',   sportIcon:'🏈', entryFee:'0.02', prizePool:'100',deadline: Date.now()/1000+86400*1, status:0, statusName:'Open', teamsCount:331, maxTeams:400, currency:0, organizer:'0xOrg3' },
+  { id:4, name:'IPL 2025 Fantasy Season',          sport:2, sportName:'Cricket',    sportIcon:'🏏', entryFee:'0',    prizePool:'10', deadline: Date.now()/1000+86400*10,status:0, statusName:'Open', teamsCount:56, maxTeams:0, currency:0, organizer:'0xOrg4' },
+  { id:5, name:'La Liga Fantasy GW18',             sport:4, sportName:'Soccer',     sportIcon:'⚽', entryFee:'0.01', prizePool:'30', deadline: Date.now()/1000+86400*2, status:1, statusName:'Closed',teamsCount:200, maxTeams:200, currency:0, organizer:'0xOrg5' },
+  { id:6, name:'NBA Finals Fantasy',               sport:1, sportName:'Basketball', sportIcon:'🏀', entryFee:'0.1',  prizePool:'500',deadline: Date.now()/1000-86400,  status:4, statusName:'Finalized',teamsCount:98, maxTeams:100, currency:0, organizer:'0xOrg6' }
+];
+
+const MOCK_PLAYERS_SOCCER = [
+  {id:1,name:'Lionel Messi',realTeam:'Inter Miami',position:3,posName:'FWD',sport:4,status:0,statusName:'Active'},
+  {id:2,name:'Cristiano Ronaldo',realTeam:'Al-Nassr',position:3,posName:'FWD',sport:4,status:0,statusName:'Active'},
+  {id:3,name:'Erling Haaland',realTeam:'Man City',position:3,posName:'FWD',sport:4,status:0,statusName:'Active'},
+  {id:4,name:'Kylian Mbappé',realTeam:'Real Madrid',position:3,posName:'FWD',sport:4,status:0,statusName:'Active'},
+  {id:5,name:'Kevin De Bruyne',realTeam:'Man City',position:2,posName:'MID',sport:4,status:0,statusName:'Active'},
+  {id:6,name:'Pedri',realTeam:'Barcelona',position:2,posName:'MID',sport:4,status:0,statusName:'Active'},
+  {id:7,name:'Rodri',realTeam:'Man City',position:2,posName:'MID',sport:4,status:0,statusName:'Active'},
+  {id:8,name:'Virgil van Dijk',realTeam:'Liverpool',position:1,posName:'DEF',sport:4,status:0,statusName:'Active'},
+  {id:9,name:'Rúben Dias',realTeam:'Man City',position:1,posName:'DEF',sport:4,status:0,statusName:'Active'},
+  {id:10,name:'Trent Alexander-Arnold',realTeam:'Liverpool',position:1,posName:'DEF',sport:4,status:0,statusName:'Active'},
+  {id:11,name:'Alisson Becker',realTeam:'Liverpool',position:0,posName:'GK',sport:4,status:0,statusName:'Active'},
+  {id:12,name:'Marc-André ter Stegen',realTeam:'Barcelona',position:0,posName:'GK',sport:4,status:0,statusName:'Active'},
+  {id:13,name:'Harry Kane',realTeam:'Bayern Munich',position:3,posName:'FWD',sport:4,status:1,statusName:'Injured'},
+  {id:14,name:'Lautaro Martínez',realTeam:'Inter Milan',position:3,posName:'FWD',sport:4,status:0,statusName:'Active'},
+  {id:15,name:'Bukayo Saka',realTeam:'Arsenal',position:2,posName:'MID',sport:4,status:0,statusName:'Active'},
+];
+
+const MOCK_LEADERBOARD = [
+  {rank:1,name:'0xCrypt0King',teamName:'Electric Strikers',score:287,prize:'25.0 BOT'},
+  {rank:2,name:'0xDefiWizard',teamName:'Chain Gang',score:261,prize:'15.0 BOT'},
+  {rank:3,name:'0xNFTmaster',teamName:'Block Ballers',score:244,prize:'10.0 BOT'},
+  {rank:4,name:'0xW3bUser99',teamName:'Hash Rate FC',score:231,prize:'—'},
+  {rank:5,name:'0xSatoshi01',teamName:'Proof of Goals',score:218,prize:'—'},
+  {rank:6,name:'0xEthMaxi',teamName:'Smart Contract SC',score:205,prize:'—'},
+];
+
+const MOCK_USER_TEAMS = [
+  {compId:1,compName:'UCL Fantasy W12',sportIcon:'⚽',teamName:'My Dream XI',score:187,rank:14,totalTeams:142,claimable:0},
+  {compId:3,compName:'NFL Week 15 Fantasy',sportIcon:'🏈',teamName:'TouchdownCrew',score:231,rank:3,totalTeams:331,claimable:20},
+];
+
+// ═══════════════════════════ ROUTER ════════════════════════════════════════
+function navigate(page, data = null) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+  const target = document.getElementById('page-' + page);
+  if (target) {
+    target.classList.add('active');
+    state.currentPage = page;
+    window.scrollTo(0,0);
+
+    const link = document.querySelector(`.nav-link[onclick*="'${page}'"]`);
+    if (link) link.classList.add('active');
+
+    // Page-specific init
+    if (page === 'competitions') initCompetitions();
+    if (page === 'comp-detail' && data) loadCompDetail(data);
+    if (page === 'team-builder' && data) initTeamBuilder(data);
+    if (page === 'dashboard') initDashboard();
+    if (page === 'leaderboard') initLeaderboard();
+    if (page === 'organizer') initOrganizer();
+  }
+}
+
+// ═══════════════════════════ WALLET ════════════════════════════════════════
+async function connectMetaMask() {
+  if (!window.ethereum) {
+    showToast('MetaMask not detected. Please install MetaMask.', 'error');
+    return;
+  }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    state.account = accounts[0];
+
+    // Switch to BOT Chain
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x' + CONFIG.chainId.toString(16) }]
+      });
+    } catch (switchErr) {
+      if (switchErr.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x' + CONFIG.chainId.toString(16),
+            chainName: CONFIG.chainName,
+            rpcUrls: CONFIG.rpcUrls,
+            nativeCurrency: CONFIG.nativeCurrency,
+            blockExplorerUrls: CONFIG.blockExplorerUrls
+          }]
+        });
+      }
+    }
+
+    state.provider = new ethers.BrowserProvider(window.ethereum);
+    state.signer = await state.provider.getSigner();
+
+    updateWalletUI();
+    closeModal('wallet-modal');
+    showToast('Wallet connected! ' + shortAddr(state.account), 'success');
+    CONFIG.demoMode = false; // switch to live mode if contracts deployed
+  } catch (e) {
+    showToast('Connection failed: ' + (e.message || e), 'error');
+  }
+}
+
+function updateWalletUI() {
+  const btn = document.getElementById('wallet-btn');
+  const info = document.getElementById('wallet-info');
+  const addrEl = document.getElementById('wallet-addr');
+  if (state.account) {
+    btn.style.display = 'none';
+    info.style.display = 'flex';
+    addrEl.textContent = shortAddr(state.account);
+    fetchBalance();
+  }
+}
+
+async function fetchBalance() {
+  if (!state.provider || !state.account) return;
+  try {
+    const bal = await state.provider.getBalance(state.account);
+    document.getElementById('wallet-balance').textContent =
+      parseFloat(ethers.formatEther(bal)).toFixed(3) + ' BOT';
+  } catch {}
+}
+
+function shortAddr(a) {
+  return a ? a.slice(0,6) + '…' + a.slice(-4) : '';
+}
+
+function getContract(name) {
+  if (!state.signer) return null;
+  return new ethers.Contract(CONFIG.contracts[name], ABIS[name], state.signer);
+}
+
+// ═══════════════════════════ COMPETITIONS ══════════════════════════════════
+function initCompetitions() {
+  renderCompetitions(MOCK_COMPETITIONS);
+}
+
+function renderCompetitions(comps) {
+  const grid = document.getElementById('competitions-grid');
+  if (!comps.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🏟️</div><div class="empty-text">No competitions found</div></div>';
+    return;
+  }
+  grid.innerHTML = comps.map(c => compCard(c)).join('');
+}
+
+function compCard(c) {
+  const pct = c.maxTeams > 0 ? Math.round(c.teamsCount / c.maxTeams * 100) : 50;
+  const dl = formatCountdown(c.deadline);
+  const statusColor = ['status-open','status-closed','status-scoring','status-disputed','status-finalized','status-cancelled'][c.status] || 'status-open';
+  return `
+  <div class="comp-card" onclick="loadCompDetail(${c.id})">
+    <div class="comp-card-header">
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <span class="comp-sport-icon">${c.sportIcon}</span>
+        <div>
+          <div class="badge badge-blue" style="font-size:.7rem">${c.sportName}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--text2)">
+        <span class="status-dot ${statusColor}"></span> ${c.statusName}
+      </div>
+    </div>
+    <div class="comp-card-body">
+      <div class="comp-card-name">${c.name}</div>
+      <div class="comp-card-meta">
+        <div class="comp-meta-item">
+          <div class="comp-meta-label">Prize Pool</div>
+          <div class="comp-meta-value" style="color:var(--gold)">${c.prizePool} BOT</div>
+        </div>
+        <div class="comp-meta-item">
+          <div class="comp-meta-label">Entry Fee</div>
+          <div class="comp-meta-value">${parseFloat(c.entryFee) > 0 ? c.entryFee + ' BOT' : 'Free'}</div>
+        </div>
+        <div class="comp-meta-item">
+          <div class="comp-meta-label">Deadline</div>
+          <div class="comp-meta-value" style="font-size:.8rem">${dl}</div>
+        </div>
+        <div class="comp-meta-item">
+          <div class="comp-meta-label">Teams</div>
+          <div class="comp-meta-value">${c.teamsCount}${c.maxTeams > 0 ? ' / ' + c.maxTeams : ''}</div>
+        </div>
+      </div>
+    </div>
+    <div class="comp-card-footer">
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();loadCompDetail(${c.id})">
+        ${c.status === 0 ? 'Join →' : 'View →'}
+      </button>
+    </div>
+  </div>`;
+}
+
+function filterCompetitions() {
+  const sport = document.getElementById('comp-filter-sport').value;
+  const status = document.getElementById('comp-filter-status').value;
+  let filtered = MOCK_COMPETITIONS;
+  if (sport) filtered = filtered.filter(c => String(c.sport) === sport);
+  if (status) filtered = filtered.filter(c => String(c.status) === status);
+  renderCompetitions(filtered);
+}
+
+// ═══════════════════════════ COMPETITION DETAIL ═════════════════════════════
+function loadCompDetail(id) {
+  state.currentCompId = id;
+  navigate('comp-detail');
+  const comp = MOCK_COMPETITIONS.find(c => c.id == id) || MOCK_COMPETITIONS[0];
+  const content = document.getElementById('comp-detail-content');
+  const dl = formatCountdown(comp.deadline);
+
+  content.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start">
+      <div>
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+          <span style="font-size:3rem">${comp.sportIcon}</span>
+          <div>
+            <h1 style="font-size:1.6rem;font-weight:800">${comp.name}</h1>
+            <div style="display:flex;gap:.5rem;margin-top:.4rem;flex-wrap:wrap">
+              <span class="badge badge-blue">${comp.sportName}</span>
+              <span class="badge badge-green">⏰ Closes in ${dl}</span>
+              <span class="badge ${comp.status===0?'badge-green':'badge-blue'}">${comp.statusName}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-bottom:1.5rem">
+          <div class="card-sm" style="text-align:center">
+            <div style="font-size:1.6rem;font-weight:800;color:var(--gold)">${comp.prizePool} BOT</div>
+            <div style="font-size:.8rem;color:var(--text2)">Prize Pool</div>
+          </div>
+          <div class="card-sm" style="text-align:center">
+            <div style="font-size:1.6rem;font-weight:800">${parseFloat(comp.entryFee)>0?comp.entryFee+' BOT':'Free'}</div>
+            <div style="font-size:.8rem;color:var(--text2)">Entry Fee</div>
+          </div>
+          <div class="card-sm" style="text-align:center">
+            <div style="font-size:1.6rem;font-weight:800">${comp.teamsCount}</div>
+            <div style="font-size:.8rem;color:var(--text2)">Teams Joined</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.25rem">
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:.75rem">Prize Distribution</h3>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap">
+            <div style="flex:1;text-align:center;background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);border-radius:var(--radius);padding:.75rem"><div style="font-size:1.2rem">🥇</div><div style="font-size:1rem;font-weight:700;color:var(--gold)">${(parseFloat(comp.prizePool)*0.5).toFixed(1)} BOT</div><div style="font-size:.75rem;color:var(--text2)">1st Place (50%)</div></div>
+            <div style="flex:1;text-align:center;background:rgba(192,192,192,.08);border:1px solid rgba(192,192,192,.2);border-radius:var(--radius);padding:.75rem"><div style="font-size:1.2rem">🥈</div><div style="font-size:1rem;font-weight:700">${(parseFloat(comp.prizePool)*0.3).toFixed(1)} BOT</div><div style="font-size:.75rem;color:var(--text2)">2nd Place (30%)</div></div>
+            <div style="flex:1;text-align:center;background:rgba(205,127,50,.08);border:1px solid rgba(205,127,50,.2);border-radius:var(--radius);padding:.75rem"><div style="font-size:1.2rem">🥉</div><div style="font-size:1rem;font-weight:700">${(parseFloat(comp.prizePool)*0.2).toFixed(1)} BOT</div><div style="font-size:.75rem;color:var(--text2)">3rd Place (20%)</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:.75rem">Leaderboard Preview</h3>
+          ${MOCK_LEADERBOARD.slice(0,3).map((r,i) => `
+          <div class="leaderboard-row">
+            <div class="lb-rank rank-${i+1}">${['🥇','🥈','🥉'][i]}</div>
+            <div><div class="lb-name">${r.teamName}</div><div class="lb-addr">${r.name}</div></div>
+            <div class="lb-score">${r.score} pts</div>
+            <div class="lb-prize">${r.prize}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="position:sticky;top:5rem">
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem">Competition Info</h3>
+          <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.88rem;margin-bottom:1.25rem">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Organizer</span><span>${shortAddr('0x742d35Cc6634C0532925a3b8D4C9C3')}</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Max Teams</span><span>${comp.maxTeams||'Unlimited'}</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Competition ID</span><span>#${comp.id}</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Currency</span><span>BOT (Native)</span></div>
+          </div>
+          ${comp.status === 0 ? `
+          <button class="btn btn-primary w-full" onclick="navigate('team-builder', ${comp.id})" style="margin-bottom:.75rem">
+            🏆 Build & Enter Team
+          </button>` : ''}
+          <button class="btn btn-outline w-full btn-sm" onclick="navigate('leaderboard')">
+            View Full Leaderboard
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════ TEAM BUILDER ══════════════════════════════════
+function initTeamBuilder(compId) {
+  state.currentCompId = compId;
+  state.selectedPlayers = [];
+  const comp = MOCK_COMPETITIONS.find(c => c.id == compId) || MOCK_COMPETITIONS[0];
+
+  document.getElementById('tb-title').textContent = 'Build Team — ' + comp.name;
+  document.getElementById('tb-subtitle').textContent = comp.sportIcon + ' ' + comp.sportName + ' · ' + (parseFloat(comp.entryFee)>0?comp.entryFee+' BOT entry':'Free entry');
+  document.getElementById('team-entry-info').innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:.25rem"><span style="color:var(--text2);font-size:.8rem">Entry Fee</span><span style="font-weight:700">${parseFloat(comp.entryFee)>0?comp.entryFee+' BOT':'Free'}</span></div>
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--text2);font-size:.8rem">Required Players</span><span style="font-weight:700">3–11</span></div>`;
+
+  renderPlayerPool(MOCK_PLAYERS_SOCCER, 'all');
+  renderTeamSlots();
+}
+
+function renderPlayerPool(players, filter) {
+  const grid = document.getElementById('player-pool-grid');
+  const filtered = filter === 'all' ? players : players.filter(p => p.posName === filter);
+  grid.innerHTML = filtered.map(p => `
+    <div class="player-card ${state.selectedPlayers.includes(p.id) ? 'selected' : ''} ${p.status>0?'':''}
+        ${p.status===1?'':''}
+        " onclick="togglePlayer(${p.id})" id="pcard-${p.id}">
+      <div class="player-avatar">${p.name.charAt(0)}</div>
+      <div class="player-name">${p.name}</div>
+      <div class="player-team-name">${p.realTeam}</div>
+      <div>
+        <span class="player-pos-badge">${p.posName}</span>
+        ${p.status>0?`<span style="font-size:.7rem;color:var(--red);margin-left:.35rem">⚠ ${p.statusName}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function togglePlayer(playerId) {
+  const player = MOCK_PLAYERS_SOCCER.find(p => p.id === playerId);
+  if (player && player.status > 0) {
+    showToast('Player is ' + player.statusName.toLowerCase() + ' — cannot select', 'error');
+    return;
+  }
+  const idx = state.selectedPlayers.indexOf(playerId);
+  if (idx >= 0) {
+    state.selectedPlayers.splice(idx, 1);
+  } else {
+    if (state.selectedPlayers.length >= 11) {
+      showToast('Maximum 11 players per team', 'error');
+      return;
+    }
+    state.selectedPlayers.push(playerId);
+  }
+  updatePlayerCard(playerId);
+  renderTeamSlots();
+  updateTBCounter();
+}
+
+function updatePlayerCard(playerId) {
+  const card = document.getElementById('pcard-' + playerId);
+  if (card) {
+    if (state.selectedPlayers.includes(playerId)) {
+      card.classList.add('selected');
+    } else {
+      card.classList.remove('selected');
+    }
+  }
+}
+
+function renderTeamSlots() {
+  const container = document.getElementById('team-slots');
+  const minSlots = 11;
+  let html = '';
+  for (let i = 0; i < minSlots; i++) {
+    if (i < state.selectedPlayers.length) {
+      const pid = state.selectedPlayers[i];
+      const p = MOCK_PLAYERS_SOCCER.find(pl => pl.id === pid);
+      html += `<div class="team-slot filled">
+        <span>${p ? p.name : '?'}</span>
+        <span class="player-pos-badge" style="font-size:.65rem;padding:.1rem .4rem">${p ? p.posName : ''}</span>
+        <button class="team-slot-remove" onclick="togglePlayer(${pid})">✕</button>
+      </div>`;
+    } else {
+      html += `<div class="team-slot">Player ${i + 1}</div>`;
+    }
+  }
+  container.innerHTML = html;
+
+  const submitBtn = document.getElementById('tb-submit');
+  submitBtn.disabled = state.selectedPlayers.length < 3;
+}
+
+function updateTBCounter() {
+  document.getElementById('tb-counter').textContent = `${state.selectedPlayers.length} / 11 players`;
+}
+
+function filterPlayers(pos, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPlayerPool(MOCK_PLAYERS_SOCCER, pos);
+}
+
+async function submitTeam() {
+  const teamName = document.getElementById('tb-team-name').value.trim();
+  if (!teamName) { showToast('Please enter a team name', 'error'); return; }
+  if (state.selectedPlayers.length < 3) { showToast('Select at least 3 players', 'error'); return; }
+
+  if (!state.account) {
+    showToast('Connect your wallet first', 'error');
+    openModal('wallet-modal');
+    return;
+  }
+
+  const comp = MOCK_COMPETITIONS.find(c => c.id == state.currentCompId);
+  if (!comp) return;
+
+  showToast('Submitting team to blockchain...', 'info');
+
+  try {
+    if (CONFIG.demoMode) {
+      await sleep(1500);
+      showToast('Team "' + teamName + '" submitted! (Demo Mode)', 'success');
+      navigate('dashboard');
+      return;
+    }
+
+    const tm = getContract('TeamManager');
+    const fee = ethers.parseEther(String(comp.entryFee || '0'));
+    const tx = await tm.createTeam(state.currentCompId, teamName, state.selectedPlayers, { value: fee });
+    await tx.wait();
+    showToast('Team submitted! Tx: ' + shortAddr(tx.hash), 'success');
+    navigate('dashboard');
+  } catch(e) {
+    showToast('Transaction failed: ' + (e.reason || e.message || e), 'error');
+  }
+}
+
+// ═══════════════════════════ DASHBOARD ═════════════════════════════════════
+function initDashboard() {
+  const addr = state.account || '0xDemo...User';
+  document.getElementById('dash-addr-label').textContent = 'Wallet: ' + (state.account ? shortAddr(state.account) : 'Demo Mode');
+
+  // Claimable section
+  const claimable = MOCK_USER_TEAMS.filter(t => t.claimable > 0);
+  const claimSec = document.getElementById('claimable-section');
+  if (claimable.length > 0) {
+    claimSec.innerHTML = claimable.map(t => `
+      <div class="claimable-banner">
+        <div>
+          <div style="font-size:.8rem;color:var(--gold);font-weight:600;margin-bottom:.25rem">🏆 PRIZE AVAILABLE</div>
+          <div style="font-weight:700">${t.compName} — ${t.teamName}</div>
+          <div style="font-size:.88rem;color:var(--text2)">#${t.rank} of ${t.totalTeams} teams</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--gold)">${t.claimable} BOT</div>
+          <button class="btn btn-gold btn-sm" style="margin-top:.4rem" onclick="claimPrize(${t.compId})">Claim Prize</button>
+        </div>
+      </div>`).join('');
+  } else {
+    claimSec.innerHTML = '';
+  }
+
+  // Teams section
+  const teams = document.getElementById('dashboard-teams');
+  teams.innerHTML = `
+    <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem">Your Active Teams</h2>
+    <div class="grid-auto">
+      ${MOCK_USER_TEAMS.map(t => `
+      <div class="user-team-card">
+        <div class="user-team-sport">${t.sportIcon}</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:.25rem">${t.compName}</div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">${t.teamName}</div>
+        <div style="display:flex;gap:1.5rem;margin-top:.75rem">
+          <div><div style="font-size:1.4rem;font-weight:800">${t.score}</div><div style="font-size:.75rem;color:var(--text2)">Points</div></div>
+          <div><div style="font-size:1.4rem;font-weight:800;color:${t.rank<=3?'var(--gold)':'var(--text)'}">#${t.rank}</div><div style="font-size:.75rem;color:var(--text2)">Rank</div></div>
+          <div><div style="font-size:1.4rem;font-weight:800">${t.totalTeams}</div><div style="font-size:.75rem;color:var(--text2)">Total Teams</div></div>
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-top:1rem" onclick="loadCompDetail(${t.compId})">View Competition</button>
+      </div>`).join('')}
+      <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;cursor:pointer;border-style:dashed" onclick="navigate('competitions')">
+        <div style="font-size:2rem;margin-bottom:.5rem;opacity:.4">+</div>
+        <div style="color:var(--text2);font-size:.9rem">Join a Competition</div>
+      </div>
+    </div>`;
+}
+
+async function claimPrize(compId) {
+  if (!state.account) { openModal('wallet-modal'); return; }
+  showToast('Claiming prize...', 'info');
+  try {
+    if (CONFIG.demoMode) {
+      await sleep(1500);
+      showToast('Prize claimed! (Demo Mode)', 'success');
+      return;
+    }
+    const cm = getContract('ClaimManager');
+    const tx = await cm.claimPrize(compId);
+    await tx.wait();
+    showToast('Prize claimed! Tx: ' + shortAddr(tx.hash), 'success');
+    initDashboard();
+  } catch(e) {
+    showToast('Claim failed: ' + (e.reason || e.message || e), 'error');
+  }
+}
+
+// ═══════════════════════════ LEADERBOARD ════════════════════════════════════
+function initLeaderboard() {
+  const sel = document.getElementById('lb-comp-select');
+  sel.innerHTML = '<option value="">Select Competition</option>' +
+    MOCK_COMPETITIONS.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+  // Auto-select first finalized
+  const fin = MOCK_COMPETITIONS.find(c => c.status === 4);
+  if (fin) { sel.value = fin.id; loadLeaderboard(); }
+}
+
+function loadLeaderboard() {
+  const id = document.getElementById('lb-comp-select').value;
+  if (!id) { document.getElementById('podium-section').innerHTML = ''; document.getElementById('leaderboard-list').innerHTML = ''; return; }
+  const comp = MOCK_COMPETITIONS.find(c => c.id == id);
+
+  document.getElementById('podium-section').innerHTML = `
+    <div class="podium" style="max-width:700px;margin:0 auto 2rem">
+      <div class="podium-slot podium-2">
+        <div class="podium-crown">🥈</div>
+        <div class="podium-rank">2nd Place</div>
+        <div class="podium-name">${MOCK_LEADERBOARD[1].teamName}</div>
+        <div class="podium-score" style="color:#c0c0c0">${MOCK_LEADERBOARD[1].score}</div>
+        <div class="podium-prize">${(parseFloat(comp.prizePool)*0.3).toFixed(1)} BOT</div>
+      </div>
+      <div class="podium-slot podium-1">
+        <div class="podium-crown">🥇</div>
+        <div class="podium-rank">1st Place</div>
+        <div class="podium-name">${MOCK_LEADERBOARD[0].teamName}</div>
+        <div class="podium-score" style="color:var(--gold)">${MOCK_LEADERBOARD[0].score}</div>
+        <div class="podium-prize">${(parseFloat(comp.prizePool)*0.5).toFixed(1)} BOT</div>
+      </div>
+      <div class="podium-slot podium-3">
+        <div class="podium-crown">🥉</div>
+        <div class="podium-rank">3rd Place</div>
+        <div class="podium-name">${MOCK_LEADERBOARD[2].teamName}</div>
+        <div class="podium-score" style="color:#cd7f32">${MOCK_LEADERBOARD[2].score}</div>
+        <div class="podium-prize">${(parseFloat(comp.prizePool)*0.2).toFixed(1)} BOT</div>
+      </div>
+    </div>`;
+
+  document.getElementById('leaderboard-list').innerHTML =
+    MOCK_LEADERBOARD.map(r => `
+    <div class="leaderboard-row">
+      <div class="lb-rank rank-${r.rank}">${r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : r.rank}</div>
+      <div>
+        <div class="lb-name">${r.teamName}</div>
+        <div class="lb-addr">${r.name}</div>
+      </div>
+      <div class="lb-score">${r.score} pts</div>
+      <div class="lb-prize">${r.prize}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════ ORGANIZER ═════════════════════════════════════
+function initOrganizer() {
+  const list = document.getElementById('org-competitions-list');
+  list.innerHTML = MOCK_COMPETITIONS.map(c => `
+    <div class="card" style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div>
+        <div style="font-weight:700">${c.sportIcon} ${c.name}</div>
+        <div style="font-size:.82rem;color:var(--text2);margin-top:.2rem">ID #${c.id} · ${c.teamsCount} teams · ${c.prizePool} BOT prize pool</div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <span class="badge badge-blue">${c.statusName}</span>
+        ${c.status===0?`<button class="btn btn-danger btn-sm" onclick="cancelCompetition(${c.id})">Cancel</button>`:''}
+      </div>
+    </div>`).join('');
+
+  // Set default deadline to 1 week from now
+  const dflt = new Date(Date.now() + 7*86400*1000);
+  document.getElementById('org-deadline').value = dflt.toISOString().slice(0,16);
+}
+
+function showOrgPanel(name) {
+  document.querySelectorAll('#page-organizer .admin-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#page-organizer .admin-nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('org-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+async function createCompetition() {
+  const name    = document.getElementById('org-name')?.value || document.getElementById('cc-name')?.value;
+  const sport   = parseInt(document.getElementById('org-sport')?.value || document.getElementById('cc-sport')?.value || 4);
+  const fee     = document.getElementById('org-fee')?.value || document.getElementById('cc-fee')?.value || '0';
+  const max     = parseInt(document.getElementById('org-max')?.value || document.getElementById('cc-max')?.value || 0);
+  const prize   = document.getElementById('org-prize')?.value || document.getElementById('cc-prize')?.value;
+  const dl      = document.getElementById('org-deadline')?.value || document.getElementById('cc-deadline')?.value;
+  const oracle  = document.getElementById('org-oracle')?.value || document.getElementById('cc-oracle')?.value;
+
+  if (!name || !prize || !dl || !oracle) {
+    showToast('Please fill all required fields', 'error');
+    return;
+  }
+
+  if (!state.account) { openModal('wallet-modal'); return; }
+
+  showToast('Deploying competition...', 'info');
+  try {
+    if (CONFIG.demoMode) {
+      await sleep(2000);
+      closeModal('create-comp-modal');
+      showToast('Competition "' + name + '" created! (Demo Mode)', 'success');
+      return;
+    }
+    const factory = getContract('CompetitionFactory');
+    const deadline = Math.floor(new Date(dl).getTime() / 1000);
+    const rulesHash = ethers.keccak256(ethers.toUtf8Bytes('{}'));
+    const feeWei = ethers.parseEther(String(fee || '0'));
+    const prizeWei = ethers.parseEther(String(prize));
+
+    const tx = await factory.createCompetition(
+      name, sport, feeWei, max, deadline, oracle, rulesHash,
+      { value: prizeWei }
+    );
+    await tx.wait();
+    closeModal('create-comp-modal');
+    showToast('Competition created! Tx: ' + shortAddr(tx.hash), 'success');
+  } catch(e) {
+    showToast('Failed: ' + (e.reason || e.message || e), 'error');
+  }
+}
+
+async function submitOracleResults() {
+  const compId    = parseInt(document.getElementById('res-comp-id').value);
+  const pidsRaw   = document.getElementById('res-player-ids').value;
+  const scoresRaw = document.getElementById('res-scores').value;
+
+  if (!compId || !pidsRaw || !scoresRaw) { showToast('Fill all fields', 'error'); return; }
+  if (!state.account) { openModal('wallet-modal'); return; }
+
+  const pids = pidsRaw.split(',').map(s => parseInt(s.trim())).filter(Boolean);
+  const scores = scoresRaw.split(',').map(s => parseInt(s.trim()));
+
+  if (pids.length !== scores.length) { showToast('Player IDs and scores must match', 'error'); return; }
+
+  showToast('Submitting match results...', 'info');
+  try {
+    if (CONFIG.demoMode) { await sleep(1500); showToast('Results submitted! (Demo Mode)', 'success'); return; }
+    const sm = getContract('ScoringManager');
+    const dh = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify({compId, pids, scores, ts: Date.now()})));
+    const tx = await sm.submitMatchResult(compId, dh, pids, scores);
+    await tx.wait();
+    showToast('Results submitted! Tx: ' + shortAddr(tx.hash), 'success');
+  } catch(e) {
+    showToast('Failed: ' + (e.reason || e.message || e), 'error');
+  }
+}
+
+async function finalizeCompetition() {
+  const compId = parseInt(document.getElementById('dist-comp-id').value);
+  if (!compId) { showToast('Enter competition ID', 'error'); return; }
+  if (!state.account) { openModal('wallet-modal'); return; }
+  showToast('Finalizing competition...', 'info');
+  try {
+    if (CONFIG.demoMode) { await sleep(1500); showToast('Competition finalized! (Demo Mode)', 'success'); return; }
+    const sm = getContract('ScoringManager');
+    const tx = await sm.finalizeCompetition(compId);
+    await tx.wait();
+    showToast('Competition finalized!', 'success');
+  } catch(e) {
+    showToast('Failed: ' + (e.reason || e.message || e), 'error');
+  }
+}
+
+async function pullEscrowFunds() {
+  const compId = parseInt(document.getElementById('dist-comp-id').value);
+  if (!compId) { showToast('Enter competition ID', 'error'); return; }
+  if (!state.account) { openModal('wallet-modal'); return; }
+  showToast('Pulling funds from escrow...', 'info');
+  try {
+    if (CONFIG.demoMode) { await sleep(1500); showToast('Funds pulled! (Demo Mode)', 'success'); return; }
+    const cm = getContract('ClaimManager');
+    const tx = await cm.pullFromEscrow(compId, ethers.ZeroAddress);
+    await tx.wait();
+    showToast('Funds pulled from escrow!', 'success');
+  } catch(e) {
+    showToast('Failed: ' + (e.reason || e.message || e), 'error');
+  }
+}
+
+async function cancelCompetition(id) {
+  if (!confirm('Cancel competition #' + id + '? Prize pool will be refunded.')) return;
+  if (!state.account) { openModal('wallet-modal'); return; }
+  showToast('Cancelling competition...', 'info');
+  try {
+    if (CONFIG.demoMode) { await sleep(1500); showToast('Competition cancelled (Demo Mode)', 'success'); return; }
+    const f = getContract('CompetitionFactory');
+    const tx = await f.cancelCompetition(id);
+    await tx.wait();
+    showToast('Competition cancelled', 'success');
+  } catch(e) {
+    showToast('Failed: ' + (e.reason || e.message || e), 'error');
+  }
+}
+
+// ═══════════════════════════ ADMIN ═════════════════════════════════════════
+function showAdminPanel(name) {
+  document.querySelectorAll('#page-admin .admin-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#page-admin .admin-nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('admin-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+async function pauseContracts() {
+  if (!state.account) { openModal('wallet-modal'); return; }
+  showToast('Pausing contracts...', 'info');
+  if (CONFIG.demoMode) { await sleep(1000); showToast('All contracts paused (Demo Mode)', 'success'); return; }
+  // In production: call pause() on each contract
+}
+
+async function unpauseContracts() {
+  if (!state.account) { openModal('wallet-modal'); return; }
+  showToast('Unpausing contracts...', 'info');
+  if (CONFIG.demoMode) { await sleep(1000); showToast('All contracts unpaused (Demo Mode)', 'success'); return; }
+}
+
+async function setPlatformFee() {
+  const bps = parseInt(document.getElementById('admin-fee-bps').value);
+  if (!bps && bps !== 0) { showToast('Enter fee in basis points', 'error'); return; }
+  if (!state.account) { openModal('wallet-modal'); return; }
+  showToast('Updating fee...', 'info');
+  if (CONFIG.demoMode) { await sleep(1000); showToast('Fee updated to ' + bps + 'bps (Demo Mode)', 'success'); return; }
+  try {
+    const f = getContract('CompetitionFactory');
+    const tx = await f.setPlatformFee(bps);
+    await tx.wait();
+    showToast('Fee updated!', 'success');
+  } catch(e) { showToast('Failed: ' + (e.message||e), 'error'); }
+}
+
+async function setFeeRecipient() {
+  const addr = document.getElementById('admin-fee-addr').value.trim();
+  if (!addr) { showToast('Enter recipient address', 'error'); return; }
+  if (!state.account) { openModal('wallet-modal'); return; }
+  if (CONFIG.demoMode) { await sleep(1000); showToast('Fee recipient updated (Demo Mode)', 'success'); return; }
+  try {
+    const f = getContract('CompetitionFactory');
+    const tx = await f.setFeeRecipient(addr);
+    await tx.wait();
+    showToast('Fee recipient updated!', 'success');
+  } catch(e) { showToast('Failed: ' + (e.message||e), 'error'); }
+}
+
+async function authorizeOracle(authorized) {
+  const addr = document.getElementById('admin-oracle-addr').value.trim();
+  if (!addr) { showToast('Enter oracle address', 'error'); return; }
+  if (!state.account) { openModal('wallet-modal'); return; }
+  if (CONFIG.demoMode) {
+    await sleep(1000);
+    showToast('Oracle ' + (authorized?'authorized':'revoked') + ' (Demo Mode)', 'success');
+    return;
+  }
+  try {
+    const sm = getContract('ScoringManager');
+    const tx = await sm.setOracle(addr, authorized);
+    await tx.wait();
+    showToast('Oracle ' + (authorized?'authorized':'revoked') + '!', 'success');
+  } catch(e) { showToast('Failed: ' + (e.message||e), 'error'); }
+}
+
+async function batchRegisterPlayers() {
+  const compId = parseInt(document.getElementById('reg-comp-id').value);
+  const names  = document.getElementById('reg-names').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const teams  = document.getElementById('reg-teams').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const positions = document.getElementById('reg-positions').value.split(',').map(s=>parseInt(s.trim()));
+
+  if (!compId || !names.length) { showToast('Fill required fields', 'error'); return; }
+  if (!state.account) { openModal('wallet-modal'); return; }
+  showToast('Registering ' + names.length + ' players...', 'info');
+  if (CONFIG.demoMode) { await sleep(1500); showToast(names.length + ' players registered (Demo Mode)', 'success'); return; }
+  try {
+    const reg = getContract('PlayerRegistry');
+    const sports = Array(names.length).fill(4);
+    const tx = await reg.batchRegisterPlayers(compId, names, teams, positions, sports);
+    await tx.wait();
+    showToast('Players registered!', 'success');
+  } catch(e) { showToast('Failed: ' + (e.message||e), 'error'); }
+}
+
+async function sweepUnclaimed() {
+  const compId = parseInt(document.getElementById('sweep-comp-id').value);
+  const recipient = document.getElementById('sweep-addr').value.trim();
+  if (!compId || !recipient) { showToast('Fill all fields', 'error'); return; }
+  if (!state.account) { openModal('wallet-modal'); return; }
+  if (!confirm('Sweep unclaimed funds for competition #' + compId + ' to ' + shortAddr(recipient) + '?')) return;
+  if (CONFIG.demoMode) { await sleep(1500); showToast('Sweep complete (Demo Mode)', 'success'); return; }
+  try {
+    const cm = getContract('ClaimManager');
+    const tx = await cm.sweepUnclaimed(compId, recipient);
+    await tx.wait();
+    showToast('Unclaimed funds swept!', 'success');
+  } catch(e) { showToast('Failed: ' + (e.message||e), 'error'); }
+}
+
+// ═══════════════════════════ UTILITIES ═════════════════════════════════════
+function formatCountdown(deadline) {
+  const diff = deadline * 1000 - Date.now();
+  if (diff <= 0) return 'Ended';
+  const d = Math.floor(diff/86400000);
+  const h = Math.floor((diff%86400000)/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; toast.style.transition = '.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function toggleMobileNav() {
+  document.getElementById('nav-links').classList.toggle('mobile-open');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+// ═══════════════════════════ INIT ══════════════════════════════════════════
+(function init() {
+  // Animate stats counter
+  function animateCounter(el, target, suffix='') {
+    let current = 0;
+    const step = target / 50;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { current = target; clearInterval(timer); }
+      el.textContent = Math.floor(current) + suffix;
+    }, 30);
+  }
+
+  setTimeout(() => {
+    const c1 = document.getElementById('stat-competitions');
+    const c2 = document.getElementById('stat-prizes');
+    const c3 = document.getElementById('stat-players');
+    if (c1) animateCounter(c1, 247);
+    if (c3) animateCounter(c3, 184, '.4K');
+  }, 300);
+
+  // Check for existing wallet connection
+  if (window.ethereum) {
+    window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
+      if (accounts.length > 0) {
+        state.account = accounts[0];
+        state.provider = new ethers.BrowserProvider(window.ethereum);
+        state.provider.getSigner().then(s => { state.signer = s; }).catch(()=>{});
+        updateWalletUI();
+      }
+    }).catch(()=>{});
+
+    window.ethereum.on('accountsChanged', accts => {
+      if (accts.length > 0) {
+        state.account = accts[0];
+        updateWalletUI();
+      } else {
+        state.account = null;
+        document.getElementById('wallet-btn').style.display = '';
+        document.getElementById('wallet-info').style.display = 'none';
+      }
+    });
+  }
+
+  // Handle hash routing
+  function handleHash() {
+    const hash = window.location.hash.slice(1) || 'landing';
+    const validPages = ['landing','competitions','dashboard','leaderboard','organizer','admin','whitepaper'];
+    if (validPages.includes(hash)) navigate(hash);
+  }
+
+  window.addEventListener('hashchange', handleHash);
+
+  // Initialize competitions for the grid
+  initCompetitions();
+
+  console.log('%c⚡ FantasyChain loaded in Demo Mode', 'color:#1e64ff;font-weight:bold;font-size:14px');
+  console.log('%cDeploy contracts and update CONFIG.contracts addresses to go live.', 'color:#8fa8cc;font-size:12px');
+})();
+</script>
+</body>
+</html>
